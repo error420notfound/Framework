@@ -1,4 +1,6 @@
+import { readPanelPreferences } from "./preferences";
 import { create } from "zustand";
+import { workspaceFor, selectionContext } from "./navigation";
 import { execute, fork, type Command } from "../domain/engine";
 import { newId, type LibraryDocument, type State } from "../domain/schema";
 import { createCompleteStarter as createStarter } from "../starter/collection";
@@ -27,6 +29,20 @@ type EditorState = {
   workspace: Workspace;
   selectedId: string;
   componentId: string;
+  bindingScope: string;
+  contexts: Partial<
+    Record<
+      Workspace,
+      {
+        selectedId: string;
+        componentId: string;
+        bindingScope: string;
+        variants: Record<string, string>;
+        states: State[];
+        previewValues: Record<string, string | number | boolean>;
+      }
+    >
+  >;
   search: string;
   themeId: string;
   densityId: string;
@@ -40,10 +56,15 @@ type EditorState = {
   dirtyFields: Record<string, boolean>;
   bottom: "Dependencies" | "Validation" | "Motion";
   panelOpen: boolean;
+  browserWidth: number;
+  inspectorWidth: number;
+  leftCollapsed: boolean;
+  rightCollapsed: boolean;
+  anatomyCollapsed: boolean;
   command: (commands: Command[], label: string) => void;
   undo: () => void;
   redo: () => void;
-  select: (id: string) => void;
+  select: (id: string, scope?: string) => void;
   navigate: (workspace: Workspace) => void;
   save: () => Promise<void>;
   openLibrary: (id: string) => void;
@@ -63,6 +84,8 @@ export const useEditor = create<EditorState>((set, get) => ({
   workspace: "Components",
   selectedId: "button_label",
   componentId: "button",
+  bindingScope: "base",
+  contexts: {},
   search: "",
   themeId: "light",
   densityId: "comfortable",
@@ -74,14 +97,16 @@ export const useEditor = create<EditorState>((set, get) => ({
   error: "",
   ready: false,
   dirtyFields: {},
-  bottom: "Dependencies",
-  panelOpen: true,
+  ...readPanelPreferences(),
   command(commands, label) {
     try {
       const prev = get().doc;
       const doc = execute(prev, commands);
       set({
         doc,
+        ...(!doc.entities[get().selectedId]
+          ? { selectedId: "", componentId: "", bindingScope: "base" }
+          : {}),
         past: [...get().past, { doc: prev, label }].slice(-100),
         future: [],
         saveState: "Unsaved",
@@ -98,6 +123,9 @@ export const useEditor = create<EditorState>((set, get) => ({
     if (!entry) return;
     set({
       doc: { ...entry.doc, revision: doc.revision + 1 },
+      ...(!entry.doc.entities[get().selectedId]
+        ? { selectedId: "", componentId: "", bindingScope: "base" }
+        : {}),
       past: past.slice(0, -1),
       future: [...future, { doc, label: entry.label }],
       saveState: "Unsaved",
@@ -118,39 +146,68 @@ export const useEditor = create<EditorState>((set, get) => ({
     });
     schedule();
   },
-  select(id) {
-    const e = get().doc.entities[id];
+  select(id, scope = "base") {
+    const state = get(),
+      e = state.doc.entities[id];
     if (!e) return;
     const workspace =
-      e.kind === "token"
-        ? e.layer === "foundation"
-          ? "Foundation tokens"
-          : "Semantic tokens"
-        : e.kind === "source" || e.kind === "asset"
-          ? "Foundations"
-          : e.kind === "theme"
-            ? "Themes"
-            : e.kind === "style"
-              ? "Styles"
-              : e.kind === "composition" || e.kind === "instance"
-                ? "Compositions"
-                : "Components";
+      e.kind === "node" && state.workspace === "Primitives" && scope === "base"
+        ? "Primitives"
+        : workspaceFor(e, state.doc);
+    const context = {
+      selectedId: state.selectedId,
+      componentId: state.componentId,
+      bindingScope: state.bindingScope,
+      variants: state.variants,
+      states: state.states,
+      previewValues: state.previewValues,
+    };
+    const target = selectionContext(state.doc, id, workspace);
+    const component = state.doc.entities[target.componentId];
     set({
-      selectedId: id,
+      ...target,
+      bindingScope: scope,
+      ...(e.kind === "motion"
+        ? { bottom: "Motion" as const, panelOpen: true }
+        : {}),
       workspace,
       search: "",
-      ...(e.kind === "component"
+      contexts: { ...state.contexts, [state.workspace]: context },
+      ...(target.componentId !== state.componentId
         ? {
-            componentId: id,
-            variants: e.defaults,
-            previewValues: {},
+            variants: component?.kind === "component" ? component.defaults : {},
             states: [],
+            previewValues: {},
           }
         : {}),
     });
   },
   navigate(workspace) {
-    set({ workspace, search: "" });
+    const state = get();
+    if (workspace === state.workspace) return;
+    const context = {
+      selectedId: state.selectedId,
+      componentId: state.componentId,
+      bindingScope: state.bindingScope,
+      variants: state.variants,
+      states: state.states,
+      previewValues: state.previewValues,
+    };
+    const remembered = state.contexts[workspace];
+    const valid = selectionContext(
+      state.doc,
+      remembered?.selectedId ?? "",
+      workspace,
+    );
+    set({
+      workspace,
+      search: "",
+      contexts: { ...state.contexts, [state.workspace]: context },
+      ...valid,
+      ...(valid.selectedId && remembered
+        ? remembered
+        : { variants: {}, states: [], previewValues: {} }),
+    });
   },
   async save() {
     const doc = structuredClone(get().doc),
@@ -187,6 +244,12 @@ export const useEditor = create<EditorState>((set, get) => ({
       past: [],
       future: [],
       selectedId: "",
+      componentId: "",
+      contexts: {},
+      bindingScope: "base",
+      variants: {},
+      states: [],
+      previewValues: {},
       themeId: doc.themeId,
       densityId: doc.densityId,
       saveState: "Saved",
@@ -206,6 +269,12 @@ export const useEditor = create<EditorState>((set, get) => ({
       past: [],
       future: [],
       selectedId: "",
+      componentId: "",
+      contexts: {},
+      bindingScope: "base",
+      variants: {},
+      states: [],
+      previewValues: {},
       themeId: doc.themeId,
       densityId: doc.densityId,
       saveState: "Unsaved",
@@ -230,6 +299,9 @@ export async function initialize(
       ...(doc
         ? {
             doc,
+            ...selectionContext(doc, "button_label", "Components"),
+            contexts: {},
+            workspace: "Components",
             themeId: doc.themeId,
             densityId: doc.densityId,
             saveState: "Saved" as const,
@@ -245,3 +317,24 @@ export async function initialize(
     });
   }
 }
+
+let lastPanelPreferences = "";
+useEditor.subscribe((state) => {
+  const preferences = JSON.stringify({
+    panelOpen: state.panelOpen,
+    bottom: state.bottom,
+    browserWidth: state.browserWidth,
+    inspectorWidth: state.inspectorWidth,
+    leftCollapsed: state.leftCollapsed,
+    rightCollapsed: state.rightCollapsed,
+    anatomyCollapsed: state.anatomyCollapsed,
+  });
+  if (preferences !== lastPanelPreferences) {
+    lastPanelPreferences = preferences;
+    try {
+      localStorage.setItem("formwork.panels.v1", preferences);
+    } catch {
+      /* Preferences are optional; document save remains independent. */
+    }
+  }
+});

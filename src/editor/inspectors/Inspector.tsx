@@ -1,6 +1,17 @@
+import { InstanceAppearance } from "./InstanceAppearance";
+import { PanelResize } from "../controls/PanelResize";
+import { Breadcrumbs } from "../controls/Breadcrumbs";
+import {
+  appearanceGroup,
+  baseBinding,
+  effectiveBinding,
+  scopePatch,
+  scopeOrigin,
+  changeScopeBinding,
+} from "../resolution";
 import { IconPicker } from "../controls/IconPicker";
 import { iconProperty } from "../../icons/catalog";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   ArrowDown,
   ArrowUp,
@@ -11,8 +22,9 @@ import {
   ExternalLink,
 } from "lucide-react";
 import { useEditor } from "../../app/store";
-import { componentForNode, usedBy } from "../../domain/engine";
+import { componentForNode, resolve, usedBy } from "../../domain/engine";
 import {
+  cssValue,
   newId,
   primitives,
   propertyTypes,
@@ -45,12 +57,25 @@ export function Inspector({
 }) {
   const { doc, selectedId, command, select } = useEditor();
   const entity = doc.entities[selectedId];
-  const [scope, setScope] = useState("base");
+  const scope = useEditor((s) => s.bindingScope);
+  const setScope = (bindingScope: string) =>
+    useEditor.setState({ bindingScope });
+  const selectedKind = doc.entities[selectedId]?.kind;
+  const [section, setSection] = useState(
+    selectedKind === "node" || selectedKind === "style"
+      ? "Appearance"
+      : "Properties",
+  );
+  const state = useEditor();
+  useEffect(() => {
+    if (scope !== "base") setSection("Appearance");
+  }, [scope]);
   const [property, setProperty] = useState("background");
   const [replacement, setReplacement] = useState("");
   if (!entity)
     return (
       <aside className="inspector">
+        <PanelResize side="inspector" />
         <div className="pane-heading">Inspector</div>
         <p className="muted inspector-hint">
           Select an item to inspect its values, bindings and uses.
@@ -109,25 +134,22 @@ export function Inspector({
   };
   const bind = (p: string, b: Binding) => {
     if (entity.kind === "node" && scope !== "base" && component) {
-      const [kind, key, value] = scope.split(":");
-      const rules = structuredClone(component.rules);
-      let r = rules.find((r) => r.id === scope.replaceAll(":", "_"));
-      if (!r) {
-        r = {
-          id: scope.replaceAll(":", "_"),
-          name: kind === "state" ? key : `${key}: ${value}`,
-          when: {
-            variants: kind === "variant" ? { [key]: value } : {},
-            states: kind === "state" ? [key as any] : [],
-          },
-          patch: {},
-        };
-        rules.push(r);
-      }
-      (r.patch[entity.id] ??= {})[p] = b;
       command(
-        [{ type: "update", id: component.id, changes: { rules } }],
-        `Bind ${p} in ${r.name}`,
+        [
+          {
+            type: "update",
+            id: component.id,
+            changes: changeScopeBinding(
+              component,
+              scope,
+              entity.id,
+              p,
+              b,
+              state.variants,
+            ),
+          },
+        ],
+        "Bind " + p + " in " + scope,
       );
     } else
       command(
@@ -148,10 +170,11 @@ export function Inspector({
   )
     bindings = { ...inheritedStyle.bindings, ...entity.bindings };
   if (entity.kind === "node" && scope !== "base")
-    bindings =
-      component?.rules.find((r) => r.id === scope.replaceAll(":", "_"))?.patch[
-        entity.id
-      ] ?? {};
+    bindings = {
+      ...(inheritedStyle?.kind === "style" ? inheritedStyle.bindings : {}),
+      ...entity.bindings,
+      ...(scopePatch(component, scope, state.variants)?.[entity.id] ?? {}),
+    };
   const createBinding = (p: string, type: ValueType) =>
     onCreate({
       kind: "token",
@@ -161,53 +184,110 @@ export function Inspector({
       ruleScope: scope !== "base" ? scope : undefined,
     });
   const dependencyCount = usedBy(doc, entity.id).length;
-  const bindingFields = Object.entries(bindings).map(([p, b]) => (
+  const priority = (p: string) => {
+    const i = [
+      "background",
+      "paddingInline",
+      "paddingBlock",
+      "fontSize",
+      "fontFamily",
+      "fontWeight",
+      "color",
+      "lineHeight",
+      "letterSpacing",
+    ].indexOf(p);
+    return i < 0 ? 100 : i;
+  };
+  const bindingEntries = Object.entries(bindings).sort(
+    ([a], [b]) => priority(a) - priority(b),
+  );
+  const bindingFields = bindingEntries.map(([p, b]) => (
     <BindingEditor
       key={p}
       label={p}
+      effective={
+        entity.kind === "node" && component
+          ? (() => {
+              const winner = effectiveBinding(doc, component, entity, p, {
+                variants: state.variants,
+                values: state.previewValues,
+                states: state.states,
+                viewport: state.viewport,
+              });
+              return winner
+                ? winner.origin +
+                    " · " +
+                    cssValue(
+                      resolve(doc, winner.binding, {
+                        themeId: state.themeId,
+                        densityId: state.densityId,
+                      }).value,
+                    )
+                : undefined;
+            })()
+          : undefined
+      }
       origin={
-        entity.kind === "node" &&
-        scope === "base" &&
-        !entity.bindings[p] &&
-        inheritedStyle?.kind === "style"
-          ? `Inherited · ${inheritedStyle.name}`
-          : scope === "base"
-            ? "Definition binding"
-            : "Rule override"
+        entity.kind === "node"
+          ? scope !== "base" &&
+            scopePatch(component, scope, state.variants)?.[entity.id]?.[p]
+            ? scopeOrigin(component, scope, state.variants)
+            : baseBinding(doc, entity, p)?.origin
+          : "Shared style value"
       }
       type={propertyTypes[p] ?? "string"}
       binding={b}
       onChange={(b) => bind(p, b)}
       onCreate={(type) => createBinding(p, type)}
-      onReset={() => {
-        if (entity.kind === "node" || entity.kind === "style") {
-          if (scope !== "base" && component) {
-            const rules = structuredClone(component.rules);
-            const r = rules.find((r) => r.id === scope.replaceAll(":", "_"));
-            if (r) {
-              delete r.patch[entity.id]?.[p];
-              command(
-                [{ type: "update", id: component.id, changes: { rules } }],
-                "Reset rule binding",
-              );
+      {...{
+        [entity.kind === "style" ? "onRemove" : "onReset"]: (
+          entity.kind === "node"
+            ? scope !== "base"
+              ? !!scopePatch(component, scope, state.variants)?.[entity.id]?.[p]
+              : !!entity.bindings[p]
+            : !!bindings[p]
+        )
+          ? () => {
+              if (entity.kind === "node" || entity.kind === "style") {
+                if (scope !== "base" && component) {
+                  command(
+                    [
+                      {
+                        type: "update",
+                        id: component.id,
+                        changes: changeScopeBinding(
+                          component,
+                          scope,
+                          entity.id,
+                          p,
+                          undefined,
+                          state.variants,
+                        ),
+                      },
+                    ],
+                    "Reset selected scope binding",
+                  );
+                } else {
+                  const next = { ...entity.bindings };
+                  delete next[p];
+                  update({ bindings: next });
+                }
+              }
             }
-          } else {
-            const next = { ...entity.bindings };
-            delete next[p];
-            update({ bindings: next });
-          }
-        }
+          : undefined,
       }}
     />
   ));
   return (
     <aside className="inspector" key={entity.id}>
+      <PanelResize side="inspector" />
       <div className="pane-heading">
         {entity.name}
         <span className="muted">{entity.kind}</span>
       </div>
+      <Breadcrumbs />
       <div className="inspector-tabs">
-        <span>Properties</span>
+        <span>Inspector</span>
         <button
           onClick={() =>
             useEditor.setState({ bottom: "Dependencies", panelOpen: true })
@@ -216,6 +296,46 @@ export function Inspector({
           Used by <small>{dependencyCount}</small>
         </button>
       </div>
+      {["node", "component", "instance", "style", "composition"].includes(
+        entity.kind,
+      ) ? (
+        <div className="inspector-sections" aria-label="Inspector sections">
+          {(entity.kind === "node"
+            ? [
+                "Appearance",
+                "Anatomy",
+                "Properties",
+                "Variants and states",
+                "Behaviour/motion",
+              ]
+            : entity.kind === "component"
+              ? [
+                  "Properties",
+                  "Appearance",
+                  "Anatomy",
+                  "Variants and states",
+                  "Behaviour/motion",
+                ]
+              : entity.kind === "style"
+                ? ["Appearance"]
+                : entity.kind === "instance"
+                  ? ["Properties", "Appearance", "Variants and states"]
+                  : ["Properties", "Behaviour/motion"]
+          ).map((tab) => (
+            <button
+              key={tab}
+              aria-pressed={section === tab}
+              onClick={() => {
+                if (entity.kind === "component" && tab === "Appearance")
+                  select(entity.rootId);
+                else setSection(tab);
+              }}
+            >
+              {tab}
+            </button>
+          ))}
+        </div>
+      ) : null}
       <div className="inspector-content">
         <Field label="Name">
           <CommitInput
@@ -310,322 +430,380 @@ export function Inspector({
         ) : null}
         {entity.kind === "node" ? (
           <>
-            <Field label="Primitive">
-              <select
-                aria-label="Primitive type"
-                value={entity.primitive}
-                onChange={(e) =>
-                  update({
-                    primitive: e.target.value as NodeEntity["primitive"],
-                  })
-                }
-              >
-                {primitives.map((p) => (
-                  <option key={p}>{p}</option>
-                ))}
-              </select>
-            </Field>
-            {component ? (
-              <Field label="Binding scope">
+            <div hidden={section !== "Anatomy"}>
+              <Field label="Primitive">
                 <select
-                  aria-label="Binding scope"
-                  value={scope}
-                  onChange={(e) => setScope(e.target.value)}
+                  aria-label="Primitive type"
+                  value={entity.primitive}
+                  onChange={(e) =>
+                    update({
+                      primitive: e.target.value as NodeEntity["primitive"],
+                    })
+                  }
                 >
-                  <option value="base">Definition defaults</option>
-                  {Object.entries(component.axes).flatMap(([axis, values]) =>
-                    values.map((v) => (
-                      <option
-                        key={`${axis}:${v}`}
-                        value={`variant:${axis}:${v}`}
-                      >
-                        {axis}: {v}
-                      </option>
-                    )),
-                  )}
-                  {[
-                    "hover",
-                    "focus-visible",
-                    "pressed",
-                    "disabled",
-                    "loading",
-                  ].map((s) => (
-                    <option key={s} value={`state:${s}`}>
-                      State: {s}
-                    </option>
+                  {primitives.map((p) => (
+                    <option key={p}>{p}</option>
                   ))}
                 </select>
               </Field>
-            ) : null}
-            {entity.primitive === "Icon" ? (
-              <IconPicker
-                key={entity.id}
-                label="Node text"
-                value={String(
-                  exposedIconProperty?.default ?? entity.props.text ?? "",
-                )}
-                onChange={setNodeIcon}
-              />
-            ) : (
-              <Field label="Text / fallback">
-                <CommitInput
-                  label="Node text"
-                  value={entity.props.text ?? ""}
-                  onCommit={(text) =>
-                    update({ props: { ...entity.props, text } })
-                  }
-                />
-              </Field>
-            )}
-            {entity.primitive === "Grid" ? (
-              <Field label="Grid columns">
-                <CommitInput
-                  label="Grid columns"
-                  type="number"
-                  value={entity.props.columns ?? 2}
-                  onCommit={(s) =>
-                    update({ props: { ...entity.props, columns: Number(s) } })
-                  }
-                />
-              </Field>
-            ) : null}
-            {["Stack", "Inline", "Grid", "Surface"].includes(
-              entity.primitive,
-            ) ? (
-              <>
-                <Field label="Alignment">
-                  <select
-                    aria-label="Node alignment"
-                    value={entity.props.align ?? "stretch"}
-                    onChange={(e) =>
-                      update({
-                        props: {
-                          ...entity.props,
-                          align: e.target.value as any,
-                        },
-                      })
-                    }
-                  >
-                    {["start", "center", "end", "stretch"].map((v) => (
-                      <option key={v}>{v}</option>
-                    ))}
-                  </select>
-                </Field>
-                <Field label="Justification">
-                  <select
-                    aria-label="Node justification"
-                    value={entity.props.justify ?? "start"}
-                    onChange={(e) =>
-                      update({
-                        props: {
-                          ...entity.props,
-                          justify: e.target.value as any,
-                        },
-                      })
-                    }
-                  >
-                    {["start", "center", "end", "between"].map((v) => (
-                      <option key={v}>{v}</option>
-                    ))}
-                  </select>
-                </Field>
-              </>
-            ) : null}
-            <Field label="Typography style">
-              <select
-                aria-label="Typography style"
-                value={entity.styleId ?? ""}
-                onChange={(e) =>
-                  command(
-                    [
-                      {
-                        type: "applyStyle",
-                        id: entity.id,
-                        styleId: e.target.value || undefined,
-                      },
-                    ],
-                    "Apply typography style",
-                  )
-                }
-              >
-                <option value="">No style</option>
-                {Object.values(doc.entities)
-                  .filter((e) => e.kind === "style")
-                  .map((s) => (
-                    <option key={s.id} value={s.id}>
-                      {s.name}
-                    </option>
-                  ))}
-              </select>
-            </Field>
-            <button
-              className="text-link"
-              onClick={() => onCreate({ kind: "style", targetId: entity.id })}
+            </div>
+            <div
+              hidden={!["Appearance", "Variants and states"].includes(section)}
             >
-              <Plus size={13} />
-              Create a style
-            </button>
-            {entity.styleId ? (
-              <div className="inheritance">
-                <span>Inherited from {doc.entities[entity.styleId]?.name}</span>
-                <button
-                  className="icon-button"
-                  title="Open style"
-                  onClick={() => select(entity.styleId!)}
-                >
-                  <ExternalLink size={13} />
-                </button>
-              </div>
-            ) : null}
-            <Field label="Expose text as property">
-              <select
-                aria-label="Expose text property"
-                value={entity.expose.text ?? ""}
-                onChange={(e) =>
-                  update({
-                    expose: Object.fromEntries(
-                      Object.entries({
-                        ...entity.expose,
-                        text: e.target.value,
-                      }).filter(([, v]) => !!v),
-                    ),
-                  })
-                }
-              >
-                <option value="">Static content</option>
-                {component?.properties
-                  .filter((p) => p.type === "text")
-                  .map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.name}
-                    </option>
-                  ))}
-              </select>
-            </Field>
-            <Field label="Slot name">
-              <CommitInput
-                label="Slot name"
-                value={entity.slot ?? ""}
-                onCommit={(slot) => update({ slot: slot || undefined })}
-              />
-            </Field>
-            {entity.primitive === "Image" ? (
-              <>
-                <Field label="Image asset">
+              {component ? (
+                <Field label="Binding scope">
                   <select
-                    aria-label="Image asset"
-                    value={entity.props.assetId ?? ""}
-                    onChange={(e) =>
-                      update({
-                        props: {
-                          ...entity.props,
-                          assetId: e.target.value || undefined,
-                        },
-                      })
-                    }
+                    aria-label="Binding scope"
+                    value={scope}
+                    onChange={(e) => setScope(e.target.value)}
                   >
-                    <option value="">Choose asset</option>
-                    {Object.values(doc.entities)
-                      .filter(
-                        (e) =>
-                          e.kind === "asset" && e.mediaType.startsWith("image"),
-                      )
-                      .map((a) => (
-                        <option key={a.id} value={a.id}>
-                          {a.name}
+                    <option value="base">Definition defaults</option>
+                    {component.rules.map((r) => (
+                      <option key={r.id} value={`rule:${r.id}`}>
+                        {r.when.states.length ? "State" : "Variant"}: {r.name}
+                      </option>
+                    ))}
+                    {component.responsive.map((r) => (
+                      <option
+                        key={r.maxWidth}
+                        value={"responsive:" + r.maxWidth}
+                      >
+                        Responsive: ≤ {r.maxWidth} px
+                      </option>
+                    ))}
+                    {Object.entries(component.axes).flatMap(([axis, values]) =>
+                      values.map((v) => (
+                        <option
+                          key={`${axis}:${v}`}
+                          value={`variant:${axis}:${v}`}
+                        >
+                          {axis}: {v}
                         </option>
-                      ))}
+                      )),
+                    )}
+                    {[
+                      "hover",
+                      "focus-visible",
+                      "pressed",
+                      "disabled",
+                      "loading",
+                    ].map((s) => (
+                      <option key={s} value={`state:${s}`}>
+                        State: {s}
+                      </option>
+                    ))}
                   </select>
                 </Field>
-                <Field label="Alternative text">
+              ) : null}
+            </div>
+            <div hidden={section !== "Properties"}>
+              {entity.primitive === "Icon" ? (
+                <IconPicker
+                  key={entity.id}
+                  label="Node text"
+                  value={String(
+                    exposedIconProperty?.default ?? entity.props.text ?? "",
+                  )}
+                  onChange={setNodeIcon}
+                />
+              ) : (
+                <Field label="Text / fallback">
                   <CommitInput
-                    label="Alternative text"
-                    value={entity.props.alt ?? ""}
-                    onCommit={(alt) =>
-                      update({ props: { ...entity.props, alt } })
+                    label="Node text"
+                    value={entity.props.text ?? ""}
+                    onCommit={(text) =>
+                      update({ props: { ...entity.props, text } })
                     }
                   />
                 </Field>
-              </>
-            ) : null}
-            <div className="section-divider">
-              <h3>Anatomy</h3>
+              )}
+              {entity.primitive === "Grid" ? (
+                <Field label="Grid columns">
+                  <CommitInput
+                    label="Grid columns"
+                    type="number"
+                    value={entity.props.columns ?? 2}
+                    onCommit={(s) =>
+                      update({ props: { ...entity.props, columns: Number(s) } })
+                    }
+                  />
+                </Field>
+              ) : null}
+              {["Stack", "Inline", "Grid", "Surface"].includes(
+                entity.primitive,
+              ) ? (
+                <>
+                  <Field label="Alignment">
+                    <select
+                      aria-label="Node alignment"
+                      value={entity.props.align ?? "stretch"}
+                      onChange={(e) =>
+                        update({
+                          props: {
+                            ...entity.props,
+                            align: e.target.value as any,
+                          },
+                        })
+                      }
+                    >
+                      {["start", "center", "end", "stretch"].map((v) => (
+                        <option key={v}>{v}</option>
+                      ))}
+                    </select>
+                  </Field>
+                  <Field label="Justification">
+                    <select
+                      aria-label="Node justification"
+                      value={entity.props.justify ?? "start"}
+                      onChange={(e) =>
+                        update({
+                          props: {
+                            ...entity.props,
+                            justify: e.target.value as any,
+                          },
+                        })
+                      }
+                    >
+                      {["start", "center", "end", "between"].map((v) => (
+                        <option key={v}>{v}</option>
+                      ))}
+                    </select>
+                  </Field>
+                </>
+              ) : null}
+            </div>
+            <div
+              hidden={
+                section !== "Appearance" ||
+                (!entity.styleId &&
+                  !["Text", "Icon"].includes(entity.primitive))
+              }
+            >
+              <Field label="Typography style">
+                <select
+                  aria-label="Typography style"
+                  value={entity.styleId ?? ""}
+                  onChange={(e) =>
+                    command(
+                      [
+                        {
+                          type: "applyStyle",
+                          id: entity.id,
+                          styleId: e.target.value || undefined,
+                        },
+                      ],
+                      "Apply typography style",
+                    )
+                  }
+                >
+                  <option value="">No style</option>
+                  {Object.values(doc.entities)
+                    .filter((e) => e.kind === "style")
+                    .map((s) => (
+                      <option key={s.id} value={s.id}>
+                        {s.name}
+                      </option>
+                    ))}
+                </select>
+              </Field>
               <button
                 className="text-link"
-                onClick={() => onCreate({ kind: "node", parentId: entity.id })}
+                onClick={() => onCreate({ kind: "style", targetId: entity.id })}
               >
                 <Plus size={13} />
-                Add part
+                Create a style
               </button>
+              {entity.styleId ? (
+                <div className="inheritance">
+                  <span>
+                    Inherited from {doc.entities[entity.styleId]?.name}
+                  </span>
+                  <button
+                    className="icon-button"
+                    title="Open style"
+                    onClick={() => select(entity.styleId!)}
+                  >
+                    <ExternalLink size={13} />
+                  </button>
+                </div>
+              ) : null}
             </div>
-            {entity.children.map((id, index) => (
-              <div className="child-row" key={id}>
-                <button className="text-link" onClick={() => select(id)}>
-                  {doc.entities[id]?.name}
-                </button>
-                <button
-                  className="icon-button"
-                  aria-label={`Move ${doc.entities[id]?.name} up`}
-                  disabled={!index}
-                  onClick={() =>
-                    command(
-                      [
-                        {
-                          type: "move",
-                          id,
-                          parentId: entity.id,
-                          index: index - 1,
-                        },
-                      ],
-                      "Reorder part",
-                    )
+            <div hidden={section !== "Properties"}>
+              <Field label="Expose text as property">
+                <select
+                  aria-label="Expose text property"
+                  value={entity.expose.text ?? ""}
+                  onChange={(e) =>
+                    update({
+                      expose: Object.fromEntries(
+                        Object.entries({
+                          ...entity.expose,
+                          text: e.target.value,
+                        }).filter(([, v]) => !!v),
+                      ),
+                    })
                   }
                 >
-                  <ArrowUp size={13} />
-                </button>
+                  <option value="">Static content</option>
+                  {component?.properties
+                    .filter((p) => p.type === "text")
+                    .map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.name}
+                      </option>
+                    ))}
+                </select>
+              </Field>
+              <Field label="Slot name">
+                <CommitInput
+                  label="Slot name"
+                  value={entity.slot ?? ""}
+                  onCommit={(slot) => update({ slot: slot || undefined })}
+                />
+              </Field>
+              {entity.primitive === "Image" ? (
+                <>
+                  <Field label="Image asset">
+                    <select
+                      aria-label="Image asset"
+                      value={entity.props.assetId ?? ""}
+                      onChange={(e) =>
+                        update({
+                          props: {
+                            ...entity.props,
+                            assetId: e.target.value || undefined,
+                          },
+                        })
+                      }
+                    >
+                      <option value="">Choose asset</option>
+                      {Object.values(doc.entities)
+                        .filter(
+                          (e) =>
+                            e.kind === "asset" &&
+                            e.mediaType.startsWith("image"),
+                        )
+                        .map((a) => (
+                          <option key={a.id} value={a.id}>
+                            {a.name}
+                          </option>
+                        ))}
+                    </select>
+                  </Field>
+                  <Field label="Alternative text">
+                    <CommitInput
+                      label="Alternative text"
+                      value={entity.props.alt ?? ""}
+                      onCommit={(alt) =>
+                        update({ props: { ...entity.props, alt } })
+                      }
+                    />
+                  </Field>
+                </>
+              ) : null}
+            </div>
+            <div hidden={section !== "Anatomy"}>
+              <div className="section-divider">
+                <h3>Anatomy</h3>
                 <button
-                  className="icon-button"
-                  aria-label={`Move ${doc.entities[id]?.name} down`}
-                  disabled={index === entity.children.length - 1}
+                  className="text-link"
                   onClick={() =>
-                    command(
-                      [
-                        {
-                          type: "move",
-                          id,
-                          parentId: entity.id,
-                          index: index + 1,
-                        },
-                      ],
-                      "Reorder part",
-                    )
+                    onCreate({ kind: "node", parentId: entity.id })
                   }
                 >
-                  <ArrowDown size={13} />
-                </button>
-                <button
-                  className="icon-button"
-                  aria-label={`Remove ${doc.entities[id]?.name}`}
-                  onClick={() =>
-                    command(
-                      [{ type: "removeNode", id }],
-                      "Remove anatomy part and its rules",
-                    )
-                  }
-                >
-                  <Trash2 size={13} />
+                  <Plus size={13} />
+                  Add part
                 </button>
               </div>
-            ))}
+              {entity.children.map((id, index) => (
+                <div className="child-row" key={id}>
+                  <button className="text-link" onClick={() => select(id)}>
+                    {doc.entities[id]?.name}
+                  </button>
+                  <button
+                    className="icon-button"
+                    aria-label={`Move ${doc.entities[id]?.name} up`}
+                    disabled={!index}
+                    onClick={() =>
+                      command(
+                        [
+                          {
+                            type: "move",
+                            id,
+                            parentId: entity.id,
+                            index: index - 1,
+                          },
+                        ],
+                        "Reorder part",
+                      )
+                    }
+                  >
+                    <ArrowUp size={13} />
+                  </button>
+                  <button
+                    className="icon-button"
+                    aria-label={`Move ${doc.entities[id]?.name} down`}
+                    disabled={index === entity.children.length - 1}
+                    onClick={() =>
+                      command(
+                        [
+                          {
+                            type: "move",
+                            id,
+                            parentId: entity.id,
+                            index: index + 1,
+                          },
+                        ],
+                        "Reorder part",
+                      )
+                    }
+                  >
+                    <ArrowDown size={13} />
+                  </button>
+                  <button
+                    className="icon-button"
+                    aria-label={`Remove ${doc.entities[id]?.name}`}
+                    onClick={() =>
+                      command(
+                        [{ type: "removeNode", id }],
+                        "Remove anatomy part and its rules",
+                      )
+                    }
+                  >
+                    <Trash2 size={13} />
+                  </button>
+                </div>
+              ))}
+            </div>
           </>
         ) : null}
         {entity.kind === "node" || entity.kind === "style" ? (
           <>
-            <div className="section-divider">
-              <h3>{scope === "base" ? "Bindings" : "Rule overrides"}</h3>
-            </div>
-            {bindingFields}
-            <div className="add-binding">
+            {["Fill", "Layout and spacing", "Border", "Typography", "Effects"]
+              .filter((group) =>
+                bindingEntries.some(([p]) => appearanceGroup(p) === group),
+              )
+              .map((group) => (
+                <details
+                  open={["Fill", "Layout and spacing", "Typography"].includes(
+                    group,
+                  )}
+                  className="appearance-group"
+                  key={group}
+                  hidden={
+                    !["Appearance", "Variants and states"].includes(section)
+                  }
+                >
+                  <summary>{group}</summary>
+                  {bindingFields.filter(
+                    (_, i) => appearanceGroup(bindingEntries[i][0]) === group,
+                  )}
+                </details>
+              ))}
+            <div
+              className="add-binding"
+              hidden={!["Appearance", "Variants and states"].includes(section)}
+            >
               <select
                 aria-label="New binding property"
                 value={property}
@@ -655,7 +833,11 @@ export function Inspector({
           </>
         ) : null}
         {entity.kind === "component" ? (
-          <ComponentInspector component={entity} onCreate={onCreate} />
+          <ComponentInspector
+            component={entity}
+            onCreate={onCreate}
+            section={section}
+          />
         ) : null}
         {entity.kind === "instance" ? (
           <>
@@ -670,93 +852,86 @@ export function Inspector({
               if (c?.kind !== "component") return null;
               return (
                 <>
-                  {c.properties.map((p) =>
-                    iconProperty(doc, p.id, c.rootId) ? (
-                      <IconPicker
-                        key={p.id}
-                        label={`Instance ${p.name}`}
-                        value={String(entity.configuration[p.id] ?? p.default)}
-                        onChange={(value) =>
-                          update({
-                            configuration: {
-                              ...entity.configuration,
-                              [p.id]: value,
-                            },
-                          })
-                        }
-                      />
-                    ) : (
-                      <Field key={p.id} label={p.name}>
-                        {p.type === "boolean" ? (
-                          <input
-                            type="checkbox"
-                            checked={Boolean(
-                              entity.configuration[p.id] ?? p.default,
-                            )}
-                            onChange={(e) =>
-                              update({
-                                configuration: {
-                                  ...entity.configuration,
-                                  [p.id]: e.target.checked,
-                                },
-                              })
-                            }
-                          />
-                        ) : (
-                          <CommitInput
-                            label={`Instance ${p.name}`}
-                            value={String(
-                              entity.configuration[p.id] ?? p.default,
-                            )}
-                            onCommit={(s) =>
-                              update({
-                                configuration: {
-                                  ...entity.configuration,
-                                  [p.id]: p.type === "number" ? Number(s) : s,
-                                },
-                              })
-                            }
-                          />
-                        )}
+                  <div hidden={section !== "Variants and states"}>
+                    {Object.entries(c.axes).map(([axis, choices]) => (
+                      <Field key={axis} label={axis}>
+                        <select
+                          aria-label={"Instance " + axis}
+                          value={entity.variants[axis] ?? c.defaults[axis]}
+                          onChange={(e) =>
+                            update({
+                              variants: {
+                                ...entity.variants,
+                                [axis]: e.target.value,
+                              },
+                            })
+                          }
+                        >
+                          {choices.map((v) => (
+                            <option key={v}>{v}</option>
+                          ))}
+                        </select>
                       </Field>
-                    ),
-                  )}
-                  <BindingEditor
-                    label="Instance fill"
-                    type="color"
-                    binding={
-                      entity.overrides[c.rootId]?.background ??
-                      (doc.entities[c.rootId] as NodeEntity).bindings
-                        .background ?? { ref: "fill" }
-                    }
-                    onChange={(binding) =>
-                      command(
-                        [
-                          {
-                            type: "override",
-                            id: entity.id,
-                            nodeId: c.rootId,
-                            property: "background",
-                            binding,
-                          },
-                        ],
-                        "Override instance fill",
-                      )
-                    }
-                    onReset={() =>
-                      command(
-                        [
-                          {
-                            type: "override",
-                            id: entity.id,
-                            nodeId: c.rootId,
-                            property: "background",
-                          },
-                        ],
-                        "Reset instance fill",
-                      )
-                    }
-                  />
+                    ))}
+                  </div>
+                  <div hidden={section !== "Properties"}>
+                    {c.properties.map((p) =>
+                      iconProperty(doc, p.id, c.rootId) ? (
+                        <IconPicker
+                          key={p.id}
+                          label={`Instance ${p.name}`}
+                          value={String(
+                            entity.configuration[p.id] ?? p.default,
+                          )}
+                          onChange={(value) =>
+                            update({
+                              configuration: {
+                                ...entity.configuration,
+                                [p.id]: value,
+                              },
+                            })
+                          }
+                        />
+                      ) : (
+                        <Field key={p.id} label={p.name}>
+                          {p.type === "boolean" ? (
+                            <input
+                              type="checkbox"
+                              checked={Boolean(
+                                entity.configuration[p.id] ?? p.default,
+                              )}
+                              onChange={(e) =>
+                                update({
+                                  configuration: {
+                                    ...entity.configuration,
+                                    [p.id]: e.target.checked,
+                                  },
+                                })
+                              }
+                            />
+                          ) : (
+                            <CommitInput
+                              label={`Instance ${p.name}`}
+                              value={String(
+                                entity.configuration[p.id] ?? p.default,
+                              )}
+                              onCommit={(s) =>
+                                update({
+                                  configuration: {
+                                    ...entity.configuration,
+                                    [p.id]: p.type === "number" ? Number(s) : s,
+                                  },
+                                })
+                              }
+                            />
+                          )}
+                        </Field>
+                      ),
+                    )}
+                  </div>
+                  <div hidden={section !== "Appearance"}>
+                    <InstanceAppearance instance={entity} />
+                  </div>
                 </>
               );
             })()}
@@ -844,74 +1019,92 @@ export function Inspector({
             )}
           </>
         ) : null}
-        <div className="section-divider">
-          <h3>Record actions</h3>
-        </div>
-        <button
-          className="secondary full"
-          onClick={() => {
-            const id = newId(entity.kind);
-            command(
-              [
-                {
-                  type: "duplicate",
-                  id: entity.id,
-                  newId: id,
-                  name: `${entity.name} copy`,
-                },
-              ],
-              "Duplicate item",
-            );
-            if (useEditor.getState().doc.entities[id]) select(id);
-          }}
-        >
-          <Copy size={13} />
-          Duplicate
-        </button>
-        <Field
-          label={
-            dependencyCount
-              ? `Replace ${dependencyCount} reference(s) with`
-              : "Optional replacement"
-          }
-        >
-          <select
-            aria-label="Delete replacement"
-            value={replacement}
-            onChange={(e) => setReplacement(e.target.value)}
+        {["node", "component", "composition"].includes(entity.kind) ? (
+          <div hidden={section !== "Behaviour/motion"}>
+            <h3>Behaviour/motion</h3>
+            <p className="small muted">
+              {component
+                ? "Native behaviour: " + component.behavior
+                : "Coordinated composition motion"}
+            </p>
+            <button
+              className="secondary full"
+              onClick={() =>
+                useEditor.setState({ bottom: "Motion", panelOpen: true })
+              }
+            >
+              Open motion tools
+            </button>
+          </div>
+        ) : null}
+        <details className="record-actions">
+          <summary>Record actions</summary>
+          <button
+            className="secondary full"
+            onClick={() => {
+              const id = newId(entity.kind);
+              command(
+                [
+                  {
+                    type: "duplicate",
+                    id: entity.id,
+                    newId: id,
+                    name: `${entity.name} copy`,
+                  },
+                ],
+                "Duplicate item",
+              );
+              if (useEditor.getState().doc.entities[id]) select(id);
+            }}
           >
-            <option value="">No replacement</option>
-            {Object.values(doc.entities)
-              .filter((e) => e.kind === entity.kind && e.id !== entity.id)
-              .map((e) => (
-                <option key={e.id} value={e.id}>
-                  {e.name}
-                </option>
-              ))}
-          </select>
-        </Field>
-        <button
-          className="danger full"
-          onClick={() =>
-            command(
-              [
-                {
-                  type: "delete",
-                  id: entity.id,
-                  replacementId: replacement || undefined,
-                },
-              ],
-              "Delete item",
-            )
-          }
-        >
-          <Trash2 size={13} />
-          Delete record
-        </button>
-        <p className="small muted">
-          References are preserved. Used records require a compatible
-          replacement.
-        </p>
+            <Copy size={13} />
+            Duplicate
+          </button>
+          <Field
+            label={
+              dependencyCount
+                ? `Replace ${dependencyCount} reference(s) with`
+                : "Optional replacement"
+            }
+          >
+            <select
+              aria-label="Delete replacement"
+              value={replacement}
+              onChange={(e) => setReplacement(e.target.value)}
+            >
+              <option value="">No replacement</option>
+              {Object.values(doc.entities)
+                .filter((e) => e.kind === entity.kind && e.id !== entity.id)
+                .map((e) => (
+                  <option key={e.id} value={e.id}>
+                    {e.name}
+                  </option>
+                ))}
+            </select>
+          </Field>
+          <button
+            className="danger full"
+            onClick={() =>
+              command(
+                [
+                  {
+                    type: "delete",
+                    id: entity.id,
+                    replacementId: replacement || undefined,
+                  },
+                ],
+                "Delete item",
+              )
+            }
+          >
+            <Trash2 size={13} />
+            Delete record
+          </button>
+          <p className="small muted">
+            References are preserved. Used records require a compatible
+            replacement.
+          </p>
+        </details>
       </div>
     </aside>
   );
@@ -919,7 +1112,9 @@ export function Inspector({
 function ComponentInspector({
   component: c,
   onCreate,
+  section,
 }: {
+  section: string;
   component: ComponentEntity;
   onCreate: (r: CreateRequest) => void;
 }) {
@@ -930,140 +1125,151 @@ function ComponentInspector({
     command([{ type: "update", id: c.id, changes }], "Edit component contract");
   return (
     <>
-      <button className="secondary full" onClick={() => select(c.rootId)}>
-        Edit anatomy
-      </button>
-      <div className="section-divider">
-        <h3>Public properties</h3>
+      <div hidden={section !== "Anatomy"}>
+        <button className="secondary full" onClick={() => select(c.rootId)}>
+          Edit anatomy
+        </button>
       </div>
-      {c.properties.map((p, index) =>
-        iconProperty(doc, p.id, c.rootId) ? (
-          <IconPicker
-            key={p.id}
-            label={`Default ${p.name}`}
-            value={String(p.default)}
-            onChange={(value) =>
-              update({
-                properties: c.properties.map((entry, i) =>
-                  i === index ? { ...entry, default: value } : entry,
-                ),
-              })
-            }
-          />
-        ) : (
-          <Field key={p.id} label={p.name}>
-            {p.type === "boolean" ? (
-              <input
-                type="checkbox"
-                checked={!!p.default}
-                onChange={(e) =>
-                  update({
-                    properties: c.properties.map((v, i) =>
-                      i === index ? { ...v, default: e.target.checked } : v,
-                    ),
-                  })
-                }
-              />
-            ) : (
-              <CommitInput
-                label={`Default ${p.name}`}
-                value={String(p.default)}
-                onCommit={(v) =>
-                  update({
-                    properties: c.properties.map((p, i) =>
-                      i === index
-                        ? { ...p, default: p.type === "number" ? Number(v) : v }
-                        : p,
-                    ),
-                  })
-                }
-              />
-            )}
+      <div hidden={section !== "Properties"}>
+        <div className="section-divider">
+          <h3>Public properties</h3>
+        </div>
+        {c.properties.map((p, index) =>
+          iconProperty(doc, p.id, c.rootId) ? (
+            <IconPicker
+              key={p.id}
+              label={`Default ${p.name}`}
+              value={String(p.default)}
+              onChange={(value) =>
+                update({
+                  properties: c.properties.map((entry, i) =>
+                    i === index ? { ...entry, default: value } : entry,
+                  ),
+                })
+              }
+            />
+          ) : (
+            <Field key={p.id} label={p.name}>
+              {p.type === "boolean" ? (
+                <input
+                  type="checkbox"
+                  checked={!!p.default}
+                  onChange={(e) =>
+                    update({
+                      properties: c.properties.map((v, i) =>
+                        i === index ? { ...v, default: e.target.checked } : v,
+                      ),
+                    })
+                  }
+                />
+              ) : (
+                <CommitInput
+                  label={`Default ${p.name}`}
+                  value={String(p.default)}
+                  onCommit={(v) =>
+                    update({
+                      properties: c.properties.map((p, i) =>
+                        i === index
+                          ? {
+                              ...p,
+                              default: p.type === "number" ? Number(v) : v,
+                            }
+                          : p,
+                      ),
+                    })
+                  }
+                />
+              )}
+            </Field>
+          ),
+        )}
+        <button
+          className="text-link"
+          onClick={() => {
+            const id = newId("prop");
+            update({
+              properties: [
+                ...c.properties,
+                { id, name: "Content", type: "text", default: "Content" },
+              ],
+            });
+          }}
+        >
+          <Plus size={13} />
+          Add text property
+        </button>
+      </div>
+      <div hidden={section !== "Variants and states"}>
+        <div className="section-divider">
+          <h3>Variant axes</h3>
+        </div>
+        {Object.entries(c.axes).map(([axis, values]) => (
+          <Field key={axis} label={axis}>
+            <CommitInput
+              label={`${axis} choices`}
+              value={values.join(", ")}
+              onCommit={(s) =>
+                update({
+                  axes: {
+                    ...c.axes,
+                    [axis]: s
+                      .split(",")
+                      .map((v) => v.trim())
+                      .filter(Boolean),
+                  },
+                })
+              }
+            />
           </Field>
-        ),
-      )}
-      <button
-        className="text-link"
-        onClick={() => {
-          const id = newId("prop");
-          update({
-            properties: [
-              ...c.properties,
-              { id, name: "Content", type: "text", default: "Content" },
-            ],
-          });
-        }}
-      >
-        <Plus size={13} />
-        Add text property
-      </button>
-      <div className="section-divider">
-        <h3>Variant axes</h3>
-      </div>
-      {Object.entries(c.axes).map(([axis, values]) => (
-        <Field key={axis} label={axis}>
-          <CommitInput
-            label={`${axis} choices`}
-            value={values.join(", ")}
-            onCommit={(s) =>
-              update({
-                axes: {
-                  ...c.axes,
-                  [axis]: s
-                    .split(",")
-                    .map((v) => v.trim())
-                    .filter(Boolean),
-                },
-              })
-            }
+        ))}
+        <Field label="New axis">
+          <input
+            aria-label="Axis name"
+            value={axisName}
+            onChange={(e) => setAxisName(e.target.value)}
           />
         </Field>
-      ))}
-      <Field label="New axis">
-        <input
-          aria-label="Axis name"
-          value={axisName}
-          onChange={(e) => setAxisName(e.target.value)}
-        />
-      </Field>
-      <Field label="Choices">
-        <input
-          aria-label="Axis choices"
-          value={choices}
-          onChange={(e) => setChoices(e.target.value)}
-        />
-      </Field>
-      <button
-        className="text-link"
-        onClick={() => {
-          if (!/^[a-z][a-z0-9-]*$/.test(axisName))
-            return useEditor.setState({
-              error:
-                "Axis name must use lowercase letters, numbers and hyphens",
+        <Field label="Choices">
+          <input
+            aria-label="Axis choices"
+            value={choices}
+            onChange={(e) => setChoices(e.target.value)}
+          />
+        </Field>
+        <button
+          className="text-link"
+          onClick={() => {
+            if (!/^[a-z][a-z0-9-]*$/.test(axisName))
+              return useEditor.setState({
+                error:
+                  "Axis name must use lowercase letters, numbers and hyphens",
+              });
+            const values = choices
+              .split(",")
+              .map((s) => s.trim())
+              .filter(Boolean);
+            update({
+              axes: { ...c.axes, [axisName]: values },
+              defaults: { ...c.defaults, [axisName]: values[0] },
             });
-          const values = choices
-            .split(",")
-            .map((s) => s.trim())
-            .filter(Boolean);
-          update({
-            axes: { ...c.axes, [axisName]: values },
-            defaults: { ...c.defaults, [axisName]: values[0] },
-          });
-        }}
-      >
-        <Plus size={13} />
-        Add axis
-      </button>
-      <button
-        className="secondary full"
-        onClick={() => onCreate({ kind: "instance", targetId: c.id })}
-      >
-        Create configured instance
-      </button>
-      <p className="small muted">
-        Select an anatomy part to author variant and state bindings. Defaults
-        apply before variant, interaction and instance overrides.
-      </p>
+          }}
+        >
+          <Plus size={13} />
+          Add axis
+        </button>
+      </div>
+      <div hidden={section !== "Properties"}>
+        <button
+          className="secondary full"
+          onClick={() => onCreate({ kind: "instance", targetId: c.id })}
+        >
+          Create configured instance
+        </button>
+        <p className="small muted">
+          Select an anatomy part to author variant and state bindings. Defaults
+          apply before variant, interaction and instance overrides.
+        </p>
+      </div>
     </>
   );
 }

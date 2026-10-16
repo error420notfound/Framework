@@ -132,9 +132,14 @@ test("anatomy icon choices update the exposed default and middle preview togethe
   const anatomy = page.locator(".anatomy");
   const picker = page.locator(".inspector .icon-picker");
   // Reproduce a stale transient preview value masking the definition choice.
+  await page.locator(".preview-content > summary").click();
   await page.getByLabel("Preview Icon", { exact: true }).fill("old preview");
   await page.getByLabel("Preview Icon", { exact: true }).press("Enter");
   await anatomy.getByRole("button", { name: "Icon", exact: true }).click();
+  await page
+    .locator(".inspector-sections")
+    .getByRole("button", { name: "Properties", exact: true })
+    .click();
   for (const [library, name, label] of [
     ["lucide", "circle-fading-plus", "Lucide"],
     ["bootstrap", "heart", "Bootstrap Icons"],
@@ -182,6 +187,10 @@ test("anatomy icon choices update the exposed default and middle preview togethe
   await expect(picker).toContainText("Material Symbols / favorite");
   // A static anatomy icon must continue to work without an exposed property.
   await anatomy.getByRole("button", { name: "Icon", exact: true }).click();
+  await page
+    .locator(".inspector-sections")
+    .getByRole("button", { name: "Properties", exact: true })
+    .click();
   await page.getByLabel("Expose text property").selectOption("");
   await picker
     .getByRole("button", { name: "Choose icon", exact: true })

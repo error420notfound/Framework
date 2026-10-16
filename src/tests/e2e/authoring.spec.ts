@@ -40,6 +40,10 @@ test("foundation → anatomy → save → portable import → export", async ({
     .getByRole("button", { name: "Button", exact: true })
     .first()
     .click();
+  await page
+    .locator(".inspector-sections")
+    .getByRole("button", { name: "Anatomy", exact: true })
+    .click();
   await page.getByRole("button", { name: "Edit anatomy" }).click();
   await page.getByLabel("background binding").selectOption("secondary_fill");
   await expect(preview().getByRole("button")).toHaveCSS(
@@ -50,13 +54,14 @@ test("foundation → anatomy → save → portable import → export", async ({
   await expect(page.getByLabel("Entity name")).toHaveValue(
     "action.secondary.fill",
   );
+  await page.getByRole("button", { name: "Dependencies", exact: true }).click();
   await expect(page.locator(".source-chain")).toContainText("color.white");
   await page.getByRole("button", { name: "Styles", exact: true }).click();
   await page.locator(".style-specimen").click();
   await page.getByLabel("fontSize binding").selectOption("__literal");
   const size = page
     .locator(".binding-editor")
-    .filter({ has: page.locator(".binding-title", { hasText: "fontSize" }) })
+    .filter({ has: page.locator(".binding-title", { hasText: "Font Size" }) })
     .getByLabel("Value", { exact: true });
   await size.fill("18");
   await size.press("Enter");
@@ -119,6 +124,10 @@ test("context creation, constrained anatomy, search and keyboard dialogs", async
     page.getByRole("button", { name: "Saved", exact: true }),
   ).toBeVisible();
   await page.locator(".tree-item").filter({ hasText: "Content" }).click();
+  await page
+    .locator(".inspector-sections")
+    .getByRole("button", { name: "Anatomy", exact: true })
+    .click();
   await page.getByRole("button", { name: "Add part", exact: true }).click();
   await page.getByLabel("New item name").fill("Second label");
   await page.getByLabel("New primitive").selectOption("Text");
@@ -126,11 +135,19 @@ test("context creation, constrained anatomy, search and keyboard dialogs", async
   await expect(
     page.locator(".tree-item", { hasText: "Second label" }),
   ).toBeVisible();
+  await page
+    .locator(".inspector-sections")
+    .getByRole("button", { name: "Properties", exact: true })
+    .click();
   await page.getByLabel("Node text").fill("Extra");
   await page.getByLabel("Node text").press("Enter");
   await expect(page.frameLocator("iframe").getByRole("button")).toContainText(
     "Extra",
   );
+  await page
+    .locator(".inspector-sections")
+    .getByRole("button", { name: "Anatomy", exact: true })
+    .click();
   await page.getByLabel("Primitive type").selectOption("Button");
   await expect(page.getByRole("alert")).toContainText("Nested interactive");
   await page.getByRole("button", { name: "Dismiss error" }).click();

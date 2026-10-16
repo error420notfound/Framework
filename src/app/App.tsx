@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 import {
   Box,
   Undo2,
@@ -68,6 +68,15 @@ export function App() {
     [leftOpen, setLeftOpen] = useState(false),
     [rightOpen, setRightOpen] = useState(false),
     [pending, setPending] = useState<LibraryDocument | null>(null);
+  const [narrow, setNarrow] = useState(
+    () => matchMedia("(max-width: 1100px)").matches,
+  );
+  useEffect(() => {
+    const media = matchMedia("(max-width: 1100px)");
+    const change = () => setNarrow(media.matches);
+    media.addEventListener("change", change);
+    return () => media.removeEventListener("change", change);
+  }, []);
   const [releasesOpen, setReleasesOpen] = useState(false);
   const file = useRef<HTMLInputElement>(null),
     review = useRef<HTMLDialogElement>(null);
@@ -141,17 +150,27 @@ export function App() {
   }
   const selected = doc.entities[selectedId],
     isCanvas =
-      workspace === "Components" ||
+      (workspace === "Components" && !!selected) ||
       (workspace === "Compositions" && selected?.kind === "instance");
   return (
     <div
-      className={`app ${leftOpen ? "left-open" : ""} ${rightOpen ? "right-open" : ""}`}
+      style={
+        {
+          "--browser-width": state.browserWidth + "px",
+          "--inspector-width": state.inspectorWidth + "px",
+        } as CSSProperties
+      }
+      className={`app ${leftOpen ? "left-open" : ""} ${rightOpen ? "right-open" : ""} ${state.leftCollapsed ? "left-collapsed" : ""} ${state.rightCollapsed ? "right-collapsed" : ""}`}
     >
       <header className="topbar">
         <button
           className="mobile-panel icon-button"
           aria-label="Toggle library browser"
-          onClick={() => setLeftOpen(!leftOpen)}
+          onClick={() => {
+            if (narrow) setLeftOpen(!leftOpen);
+            else useEditor.setState({ leftCollapsed: !state.leftCollapsed });
+          }}
+          aria-expanded={narrow ? leftOpen : !state.leftCollapsed}
         >
           <Menu size={20} />
         </button>
@@ -191,15 +210,19 @@ export function App() {
         </div>
         <div className="top-divider scope-divider" />
         <span className="top-scope">
-          {selected?.kind === "token"
-            ? `${selected.layer === "foundation" ? "Foundation" : "Semantic"} token`
-            : selected?.kind === "style"
-              ? "Reusable style"
-              : selected?.kind === "source"
-                ? "Foundation source"
-                : selected?.kind === "instance"
-                  ? "Instance scope"
-                  : "Definition scope"}
+          {!selected
+            ? "No selection"
+            : selected.kind === "motion"
+              ? "Motion scope"
+              : selected.kind === "token"
+                ? `${selected.layer === "foundation" ? "Foundation" : "Semantic"} token`
+                : selected?.kind === "style"
+                  ? "Reusable style"
+                  : selected?.kind === "source"
+                    ? "Foundation source"
+                    : selected?.kind === "instance"
+                      ? "Instance scope"
+                      : "Definition scope"}
         </span>
         <div className="topbar-spacer" />
         <button
@@ -297,7 +320,11 @@ export function App() {
         <button
           className="mobile-panel icon-button"
           aria-label="Toggle inspector"
-          onClick={() => setRightOpen(!rightOpen)}
+          onClick={() => {
+            if (narrow) setRightOpen(!rightOpen);
+            else useEditor.setState({ rightCollapsed: !state.rightCollapsed });
+          }}
+          aria-expanded={narrow ? rightOpen : !state.rightCollapsed}
         >
           <PanelRightClose size={19} />
         </button>
@@ -347,6 +374,11 @@ export function App() {
               <div className="component-editor">
                 <AnatomyTree />
                 <Canvas />
+              </div>
+            ) : workspace === "Components" ? (
+              <div className="empty">
+                <h2>Select a component</h2>
+                <p>Choose a definition in the browser to edit its anatomy.</p>
               </div>
             ) : workspace === "Compositions" ? (
               <Composition onCreate={(r) => setCreate(r)} />

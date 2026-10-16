@@ -11,6 +11,8 @@ import {
   Component,
   GripVertical,
 } from "lucide-react";
+import { PanelResize } from "../controls/PanelResize";
+import { compositionsFor } from "../../app/navigation";
 import { useEditor, type Workspace } from "../../app/store";
 import type { Entity, LibraryDocument } from "../../domain/schema";
 export const workspaceEntities = (doc: LibraryDocument, workspace: Workspace) =>
@@ -54,11 +56,15 @@ export const EntityIcon = ({ entity }: { entity: Entity }) =>
 export function Browser({ onCreate }: { onCreate: () => void }) {
   const { doc, workspace, selectedId, componentId, search, select } =
     useEditor();
-  const items = workspaceEntities(doc, workspace).filter((e) =>
-    e.name.toLowerCase().includes(search.toLowerCase()),
+  const matches = (id: string) =>
+    doc.entities[id]?.name.toLowerCase().includes(search.toLowerCase());
+  const items = workspaceEntities(doc, workspace).filter(
+    (e) =>
+      matches(e.id) || (e.kind === "composition" && e.instances.some(matches)),
   );
   return (
     <aside className="browser">
+      <PanelResize side="browser" />
       <div className="browser-search">
         <Search size={15} />
         <input
@@ -80,17 +86,76 @@ export function Browser({ onCreate }: { onCreate: () => void }) {
         <span>{items.length}</span>
       </div>
       <div className="item-list">
-        {items.map((e) => (
-          <button
-            key={e.id}
-            className={`browser-item ${e.id === selectedId || (workspace === "Components" && e.id === componentId) ? "selected" : ""}`}
-            onClick={() => select(e.id)}
-          >
-            <EntityIcon entity={e} />
-            <span>{e.name}</span>
-            <ChevronRight size={12} />
-          </button>
-        ))}
+        {workspace === "Compositions" ? (
+          <>
+            {items
+              .filter((e) => e.kind === "composition")
+              .map(
+                (e) =>
+                  e.kind === "composition" && (
+                    <details className="composition-branch" key={e.id} open>
+                      <summary>
+                        <button
+                          className={`browser-item ${selectedId === e.id || (doc.entities[selectedId]?.kind === "motion" && doc.entities[selectedId].ownerId === e.id) ? "selected" : ""}`}
+                          onClick={() => select(e.id)}
+                        >
+                          <EntityIcon entity={e} />
+                          <span>{e.name}</span>
+                        </button>
+                      </summary>
+                      <div className="composition-children">
+                        {e.instances.map((id) => {
+                          const child = doc.entities[id];
+                          return child ? (
+                            <button
+                              className={`browser-item ${selectedId === id ? "selected" : ""}`}
+                              key={id}
+                              onClick={() => select(id)}
+                            >
+                              <EntityIcon entity={child} />
+                              <span>{child.name}</span>
+                            </button>
+                          ) : null;
+                        })}
+                      </div>
+                    </details>
+                  ),
+              )}
+            {items.some(
+              (e) =>
+                e.kind === "instance" && !compositionsFor(doc, e.id).length,
+            ) ? (
+              <div className="section-label">Standalone instances</div>
+            ) : null}
+            {items
+              .filter(
+                (e) =>
+                  e.kind === "instance" && !compositionsFor(doc, e.id).length,
+              )
+              .map((e) => (
+                <button
+                  className={`browser-item ${selectedId === e.id ? "selected" : ""}`}
+                  key={e.id}
+                  onClick={() => select(e.id)}
+                >
+                  <EntityIcon entity={e} />
+                  <span>{e.name}</span>
+                </button>
+              ))}
+          </>
+        ) : (
+          items.map((e) => (
+            <button
+              key={e.id}
+              className={`browser-item ${e.id === selectedId || (workspace === "Components" && e.id === componentId) ? "selected" : ""}`}
+              onClick={() => select(e.id)}
+            >
+              <EntityIcon entity={e} />
+              <span>{e.name}</span>
+              <ChevronRight size={12} />
+            </button>
+          ))
+        )}
         {!items.length ? (
           <p className="small muted">No matching items.</p>
         ) : null}
@@ -105,7 +170,10 @@ export function Browser({ onCreate }: { onCreate: () => void }) {
 export function AnatomyTree() {
   const { doc, componentId, selectedId, select, command } = useEditor();
   const c = doc.entities[componentId];
+  const collapsed = useEditor((s) => s.anatomyCollapsed);
   if (c?.kind !== "component") return null;
+  if (doc.entities[selectedId]?.kind === "instance") return null;
+
   function tree(id: string, depth = 0) {
     const n = doc.entities[id];
     if (n?.kind !== "node") return null;
@@ -150,15 +218,25 @@ export function AnatomyTree() {
     );
   }
   return (
-    <div className="anatomy">
-      <div className="pane-heading">
-        {c.name}
-        <span className="muted">Anatomy</span>
+    <div className={`anatomy ${collapsed ? "collapsed" : ""}`}>
+      <button
+        className="anatomy-toggle"
+        aria-label="Toggle anatomy"
+        aria-expanded={!collapsed}
+        onClick={() => useEditor.setState({ anatomyCollapsed: !collapsed })}
+      >
+        {collapsed ? "Anatomy ›" : "‹ Hide anatomy"}
+      </button>
+      <div hidden={collapsed}>
+        <div className="pane-heading">
+          {c.name}
+          <span className="muted">Anatomy</span>
+        </div>
+        {tree(c.rootId)}
+        <p className="anatomy-hint">
+          Drag onto a container to move a part. Use the inspector to reorder.
+        </p>
       </div>
-      {tree(c.rootId)}
-      <p className="anatomy-hint">
-        Drag onto a container to move a part. Use the inspector to reorder.
-      </p>
     </div>
   );
 }

@@ -6,6 +6,7 @@ test("long labels, missing icon content, invalid imports and failed font loading
   await expect(
     page.getByRole("button", { name: "Saved", exact: true }),
   ).toBeVisible();
+  await page.locator(".preview-content > summary").click();
   await page
     .getByLabel("Preview Label", { exact: true })
     .fill(

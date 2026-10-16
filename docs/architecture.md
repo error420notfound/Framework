@@ -57,3 +57,9 @@ Motion is a typed entity with a component/composition owner, stable named target
 Local releases use an append-only IndexedDB store (database version 2 adds releases without replacing existing libraries). Snapshots include identity/version/revision metadata; document commands reject edits to a release. Adoption explicitly forks its document into a fresh editable library and records release provenance. Portable snapshot downloads retain release metadata. No external publishing, background sync or remote adoption is implied.
 
 Only schema 1 exists. Unknown document versions and unknown fields are rejected; future migrations must be explicit and revalidated. Rename/remove behavior and release adoption are tested, but no historical document version is fabricated for migration demonstrations. Device/browser runtime budgets remain an explicit acceptance gate.
+
+## Authoring experience refinements
+
+Workspace selections, binding scopes and preview configurations are remembered separately from document history. Compositions display their referenced instances beneath definitions without inventing exclusive ownership. The contextual inspector retains mounted field drafts and resolves actual style/node/rule/instance provenance. Semantic dependency routes resolve current paths to stable entity and rule IDs.
+
+Panel preferences are optional localStorage (`formwork.panels.v1`), separate from IndexedDB documents and portable library files. Colour space switches use unrounded conversion; out-of-gamut sRGB uses extended `color(srgb …)` output. Schema version 1 and existing import/save/export contracts remain intact. See [authoring-refinements.md](authoring-refinements.md) for the detailed contract and evidence.

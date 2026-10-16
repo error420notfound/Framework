@@ -11,6 +11,7 @@ export function MotionPanel() {
   const {
     doc,
     selectedId,
+    bindingScope,
     componentId,
     command,
     themeId,
@@ -22,13 +23,15 @@ export function MotionPanel() {
   } = useEditor();
   const selected = doc.entities[selectedId];
   const owner =
-    selected?.kind === "composition"
-      ? selected
-      : selected?.kind === "instance"
-        ? doc.entities[selected.componentId]
-        : selected?.kind === "node"
-          ? componentForNode(doc, selected.id)
-          : doc.entities[componentId];
+    selected?.kind === "motion"
+      ? doc.entities[selected.ownerId]
+      : selected?.kind === "composition"
+        ? selected
+        : selected?.kind === "instance"
+          ? doc.entities[selected.componentId]
+          : selected?.kind === "node"
+            ? componentForNode(doc, selected.id)
+            : doc.entities[componentId];
   const motions = Object.values(doc.entities).filter(
     (e): e is MotionEntity => e.kind === "motion" && e.ownerId === owner?.id,
   );
@@ -39,7 +42,16 @@ export function MotionPanel() {
     [progress, setProgress] = useState(0),
     [playing, setPlaying] = useState(false);
   const timeline = useRef<gsap.core.Timeline | null>(null);
-  const motion = motions.find((e) => e.id === motionId) ?? motions[0];
+  const motion =
+    motions.find(
+      (e) => e.id === (selected?.kind === "motion" ? selected.id : motionId),
+    ) ?? motions[0];
+  useEffect(() => {
+    if (bindingScope.startsWith("clip:"))
+      document
+        .querySelector('[data-motion-clip="' + bindingScope.slice(5) + '"]')
+        ?.scrollIntoView({ block: "nearest" });
+  }, [bindingScope, motion?.id]);
   useEffect(() => {
     timeline.current?.revert();
     timeline.current = null;
@@ -263,7 +275,11 @@ export function MotionPanel() {
                   ),
                 });
               return (
-                <div className="clip-row" key={clip.id}>
+                <div
+                  className={`clip-row ${bindingScope === "clip:" + clip.id ? "selected" : ""}`}
+                  data-motion-clip={clip.id}
+                  key={clip.id}
+                >
                   <select
                     aria-label={`Clip ${index + 1} target`}
                     value={clip.targetId}

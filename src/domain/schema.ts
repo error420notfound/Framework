@@ -312,7 +312,9 @@ export function cssValue(v: DesignValue): string {
   if (v.type === "color") {
     const [a, b, c] = v.channels;
     return v.space === "srgb"
-      ? `rgb(${a * 255} ${b * 255} ${c * 255} / ${v.alpha})`
+      ? v.channels.some((n) => n < 0 || n > 1)
+        ? `color(srgb ${a} ${b} ${c} / ${v.alpha})`
+        : `rgb(${a * 255} ${b * 255} ${c * 255} / ${v.alpha})`
       : v.space === "oklch"
         ? `oklch(${a} ${b} ${c} / ${v.alpha})`
         : `color(display-p3 ${a} ${b} ${c} / ${v.alpha})`;

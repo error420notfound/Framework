@@ -1,3 +1,4 @@
+import { changeScopeBinding } from "../resolution";
 import { useEffect, useRef, useState } from "react";
 import { X } from "lucide-react";
 import { useEditor } from "../../app/store";
@@ -177,27 +178,18 @@ export function CreateDialog({
     if (request.targetId && kind === "token" && request.ruleScope) {
       const component = componentForNode(doc, request.targetId);
       if (component) {
-        const [kind, key, value] = request.ruleScope.split(":");
-        const rules = structuredClone(component.rules);
-        let rule = rules.find(
-          (r) => r.id === request.ruleScope!.replaceAll(":", "_"),
-        );
-        if (!rule) {
-          rule = {
-            id: request.ruleScope.replaceAll(":", "_"),
-            name: request.ruleScope,
-            when: {
-              variants: kind === "variant" ? { [key]: value } : {},
-              states: kind === "state" ? [key as any] : [],
-            },
-            patch: {},
-          };
-          rules.push(rule);
-        }
-        (rule.patch[request.targetId] ??= {})[
-          request.property ?? "background"
-        ] = { ref: id };
-        commands.push({ type: "update", id: component.id, changes: { rules } });
+        commands.push({
+          type: "update",
+          id: component.id,
+          changes: changeScopeBinding(
+            component,
+            request.ruleScope,
+            request.targetId,
+            request.property ?? "background",
+            { ref: id },
+            useEditor.getState().variants,
+          ),
+        });
       }
     }
     if (request.targetId && kind === "style")

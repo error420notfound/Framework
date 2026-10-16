@@ -1,10 +1,11 @@
 import { IconPicker } from "../controls/IconPicker";
 import { iconProperty } from "../../icons/catalog";
-import { useMemo } from "react";
+import { useMemo, useRef, useEffect, useState } from "react";
 import { useEditor } from "../../app/store";
 import { previewHtml } from "../../renderer/compiler";
 import { states, type State } from "../../domain/schema";
 import { Monitor, Smartphone } from "lucide-react";
+import { Breadcrumbs } from "../controls/Breadcrumbs";
 import { Empty } from "../controls/Fields";
 export function Canvas() {
   const {
@@ -18,6 +19,18 @@ export function Canvas() {
     viewport,
     selectedId,
   } = useEditor();
+  const frameArea = useRef<HTMLDivElement>(null);
+  const [available, setAvailable] = useState(768);
+  useEffect(() => {
+    const el = frameArea.current;
+    if (!el) return;
+    const observer = new ResizeObserver(([entry]) =>
+      setAvailable(entry.contentRect.width),
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+  const scale = Math.min(1, available / viewport);
   const selected = doc.entities[selectedId];
   const instance = selected?.kind === "instance" ? selected : undefined;
   const id = instance?.componentId ?? componentId;
@@ -69,6 +82,7 @@ export function Canvas() {
   }
   return (
     <section className="canvas-workspace">
+      <Breadcrumbs />
       <div className="context-toolbar">
         <div className="context-group">
           <span>Colour theme</span>
@@ -103,7 +117,7 @@ export function Canvas() {
           </select>
         </div>
         <div className="context-group">
-          <span>Viewport</span>
+          <span>Simulated viewport</span>
           <div className="viewport-select">
             <Monitor size={14} />
             <select
@@ -113,30 +127,37 @@ export function Canvas() {
                 useEditor.setState({ viewport: Number(e.target.value) })
               }
             >
+              {![320, 768, 1280].includes(viewport) ? (
+                <option value={viewport}>{viewport} px</option>
+              ) : null}
               <option value={320}>320 px</option>
               <option value={768}>768 px</option>
               <option value={1280}>1280 px</option>
             </select>
           </div>
         </div>
-        {Object.entries(c.axes).map(([axis, choices]) => (
-          <div className="context-group" key={axis}>
-            <span>{axis}</span>
-            <div className="segmented">
-              {choices.map((v) => (
-                <button
-                  key={v}
-                  aria-pressed={(variants[axis] ?? c.defaults[axis]) === v}
-                  onClick={() =>
-                    useEditor.setState({ variants: { ...variants, [axis]: v } })
-                  }
-                >
-                  {v}
-                </button>
-              ))}
-            </div>
-          </div>
-        ))}
+        {!instance
+          ? Object.entries(c.axes).map(([axis, choices]) => (
+              <div className="context-group" key={axis}>
+                <span>{axis}</span>
+                <div className="segmented">
+                  {choices.map((v) => (
+                    <button
+                      key={v}
+                      aria-pressed={(variants[axis] ?? c.defaults[axis]) === v}
+                      onClick={() =>
+                        useEditor.setState({
+                          variants: { ...variants, [axis]: v },
+                        })
+                      }
+                    >
+                      {v}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ))
+          : null}
       </div>
       <div className="canvas-title">
         <span>
@@ -147,26 +168,51 @@ export function Canvas() {
         </span>
         <span className="muted">
           {viewport < 400 ? <Smartphone size={13} /> : <Monitor size={13} />}{" "}
-          {viewport} px
+          {viewport} px · {Math.round(scale * 100)}% canvas scale
         </span>
       </div>
-      <div className="preview-frame">
-        <iframe
-          title="Component preview"
-          sandbox="allow-same-origin"
-          srcDoc={html}
-          style={{ maxWidth: viewport }}
-          onLoad={(event) => {
-            const frame = event.currentTarget;
-            frame.contentDocument?.addEventListener("pointerdown", (event) => {
-              const target = (event.target as Element).closest(
-                "[data-fw-part]",
-              );
-              const id = target?.getAttribute("data-fw-part");
-              if (id && !instance) useEditor.getState().select(id);
-            });
+      <div
+        className="preview-frame"
+        ref={frameArea}
+        style={{ height: 280 * scale }}
+      >
+        <div
+          style={{
+            width: viewport * scale,
+            height: 280 * scale,
+            position: "relative",
+            flexShrink: 0,
           }}
-        />
+        >
+          <iframe
+            title="Component preview"
+            sandbox="allow-same-origin"
+            srcDoc={html}
+            style={{
+              width: viewport,
+              height: 280,
+              maxWidth: "none",
+              transform: `scale(${scale})`,
+              transformOrigin: "top left",
+              position: "absolute",
+              left: 0,
+              top: 0,
+            }}
+            onLoad={(event) => {
+              const frame = event.currentTarget;
+              frame.contentDocument?.addEventListener(
+                "pointerdown",
+                (event) => {
+                  const target = (event.target as Element).closest(
+                    "[data-fw-part]",
+                  );
+                  const id = target?.getAttribute("data-fw-part");
+                  if (id && !instance) useEditor.getState().select(id);
+                },
+              );
+            }}
+          />
+        </div>
       </div>
       <div className="state-heading">
         <h3>Component states</h3>
@@ -195,85 +241,92 @@ export function Canvas() {
         States combine in this preview. Disabled and loading block activation;
         focus remains additive.
       </p>
-      <div className="preview-content">
-        <h3>Instance content</h3>
-        {c.properties
-          .filter((p) => !["disabled", "loading"].includes(p.id))
-          .map((p) =>
-            iconProperty(doc, p.id, c.rootId) ? (
-              <IconPicker
-                key={id + "-" + p.id}
-                label={`Preview ${p.name}`}
-                value={String(previewValues[p.id] ?? p.default)}
-                onChange={(value) =>
-                  useEditor.setState({
-                    previewValues: { ...previewValues, [p.id]: value },
-                  })
-                }
-              />
-            ) : (
-              <label className="inline-field" key={p.id}>
-                <span>{p.name}</span>
-                {p.type === "boolean" ? (
-                  <input
-                    type="checkbox"
-                    checked={Boolean(previewValues[p.id] ?? p.default)}
-                    onChange={(e) =>
-                      useEditor.setState({
-                        previewValues: {
-                          ...previewValues,
-                          [p.id]: e.target.checked,
-                        },
-                      })
-                    }
-                  />
-                ) : p.type === "asset" ? (
-                  <select
-                    aria-label={`Preview ${p.name}`}
-                    value={String(previewValues[p.id] ?? p.default)}
-                    onChange={(e) =>
-                      useEditor.setState({
-                        previewValues: {
-                          ...previewValues,
-                          [p.id]: e.target.value,
-                        },
-                      })
-                    }
-                  >
-                    <option value="">No asset</option>
-                    {Object.values(doc.entities)
-                      .filter(
-                        (e) =>
-                          e.kind === "asset" && e.mediaType.startsWith("image"),
-                      )
-                      .map((a) => (
-                        <option key={a.id} value={a.id}>
-                          {a.name}
-                        </option>
-                      ))}
-                  </select>
-                ) : (
-                  <input
-                    type={p.type === "number" ? "number" : "text"}
-                    aria-label={`Preview ${p.name}`}
-                    value={String(previewValues[p.id] ?? p.default)}
-                    onChange={(e) =>
-                      useEditor.setState({
-                        previewValues: {
-                          ...previewValues,
-                          [p.id]:
-                            p.type === "number"
-                              ? Number(e.target.value)
-                              : e.target.value,
-                        },
-                      })
-                    }
-                  />
-                )}
-              </label>
-            ),
-          )}
-      </div>
+      {!instance ? (
+        <details className="preview-content">
+          <summary>Preview-only content</summary>
+          <p className="small muted">
+            Temporary sample values. Edit definition properties in the
+            inspector.
+          </p>
+          {c.properties
+            .filter((p) => !["disabled", "loading"].includes(p.id))
+            .map((p) =>
+              iconProperty(doc, p.id, c.rootId) ? (
+                <IconPicker
+                  key={id + "-" + p.id}
+                  label={`Preview ${p.name}`}
+                  value={String(previewValues[p.id] ?? p.default)}
+                  onChange={(value) =>
+                    useEditor.setState({
+                      previewValues: { ...previewValues, [p.id]: value },
+                    })
+                  }
+                />
+              ) : (
+                <label className="inline-field" key={p.id}>
+                  <span>{p.name}</span>
+                  {p.type === "boolean" ? (
+                    <input
+                      type="checkbox"
+                      checked={Boolean(previewValues[p.id] ?? p.default)}
+                      onChange={(e) =>
+                        useEditor.setState({
+                          previewValues: {
+                            ...previewValues,
+                            [p.id]: e.target.checked,
+                          },
+                        })
+                      }
+                    />
+                  ) : p.type === "asset" ? (
+                    <select
+                      aria-label={`Preview ${p.name}`}
+                      value={String(previewValues[p.id] ?? p.default)}
+                      onChange={(e) =>
+                        useEditor.setState({
+                          previewValues: {
+                            ...previewValues,
+                            [p.id]: e.target.value,
+                          },
+                        })
+                      }
+                    >
+                      <option value="">No asset</option>
+                      {Object.values(doc.entities)
+                        .filter(
+                          (e) =>
+                            e.kind === "asset" &&
+                            e.mediaType.startsWith("image"),
+                        )
+                        .map((a) => (
+                          <option key={a.id} value={a.id}>
+                            {a.name}
+                          </option>
+                        ))}
+                    </select>
+                  ) : (
+                    <input
+                      type={p.type === "number" ? "number" : "text"}
+                      aria-label={`Preview ${p.name}`}
+                      value={String(previewValues[p.id] ?? p.default)}
+                      onChange={(e) =>
+                        useEditor.setState({
+                          previewValues: {
+                            ...previewValues,
+                            [p.id]:
+                              p.type === "number"
+                                ? Number(e.target.value)
+                                : e.target.value,
+                          },
+                        })
+                      }
+                    />
+                  )}
+                </label>
+              ),
+            )}
+        </details>
+      ) : null}
     </section>
   );
 }

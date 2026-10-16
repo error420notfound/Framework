@@ -18,3 +18,18 @@ Verified Status options: Not started / In progress / Done. Kind options: Action 
 | 6     | 3fbea1d9945581b1a266d2820b01ed11 | 3fbea1d9945581cfb78bee2b9b6e5797; 3fbea1d9945581b98afec79ef59777fc |
 
 Confirmed final sync: all twelve existing Actions have evidence; eleven are Done and the release/migrations/device-budget Action is In progress. Groups 1-5 are Done; Group 6 and the project remain In progress. A read-only grouped query verified these counts. Activity record: https://app.notion.com/p/3fbea1d99455818faf1dedd561be9a81. Local implementation commit: aa1789e. No duplicate project/backlog pages, estimates or schedules were created. Pending writes: none.
+
+## Authoring refinement tracker — verified 2026-10-17
+
+Workstream: https://app.notion.com/p/3fbea1d9945581439d8dfa420fe3a70b (Kind Group, Done).
+
+| Action | ID | Status |
+| --- | --- | --- |
+| R1–R2 Selection/context and hierarchy | 3fbea1d9945581949c54c7382396db84 | Done |
+| R3–R5 Inspector/provenance/dependencies | 3fbea1d9945581378025df4cf9549582 | Done |
+| R6–R8 Colour/proportions/naming | 3fbea1d9945581c1a27dd2284466dd5c | Done |
+| Regression/persistence/Astro verification | 3fbea1d994558189825cd0f1c16bba42 | Done |
+
+Every Action relates to the existing Formwork project and the refinement Group, links the refinement specification and has acceptance criteria plus changed-file/test evidence. The refinement specification and project received appended checkpoints; requirements and original completion history were retained. Read-back verified the four Actions and Group are Done. The project and original release/migration/device-budget Action remain In progress. The Tasks query now contains fifteen Done Actions and one In progress Action, six Done Groups and one In progress Group. No original task was reopened; no duplicate refinement task was created.
+
+Final evidence: 40 model tests, 58 browser tests passed plus 2 intentional parity-matrix skips, editor and three generated Astro routes build, required desktop/narrow screenshots inspected. Changes remain uncommitted on main based on 9a04544; nothing pushed or deployed. Pending Notion writes: none.

@@ -43,3 +43,11 @@ Final navigation regression: library switching while autosaving edits, independe
 
 Final full run: npm run test:e2e:all completed with 34 passed and 2 intentionally skipped (the Chromium-only parity matrix in Firefox/WebKit). All browser cases passed after the shared draft/save fixes.
 Final visual repair: normalized editor select appearance and chevrons after WebKit screenshots exposed clipped native select text. Selected values remain readable; native select semantics and keyboard operation are retained.
+
+## Authoring refinements — 2026-10-17
+
+`npm test`: 40 passed. `npm run build`: passed. Generated Astro output builds three routes (`npm run fixture:build`, also rebuilt by the e2e fixture server). `npm run test:e2e:all`: 58 passed and 2 intentional parity-matrix skips. Chromium runs twenty workflows including the 72-combination parity matrix; Firefox and WebKit each run nineteen. Existing journeys were retained and updated to use the new inspector sections/disclosures; fifteen model regressions and six browser journeys cover the refinement failures.
+
+Verified selection return/source navigation, composition children and definition isolation, scoped/style/instance reset, exact responsive/motion routes, colour conversion/precision/validation, panel resize/collapse/preferences, keyboard interaction, save/reload/portable data and static export dependency exclusion. Screenshots at 1366 x 900, 1440 x 900, 900 x 900 and 390 x 844 were inspected. Evidence and tolerances are in [authoring-refinements.md](authoring-refinements.md); screenshots are under `output/playwright`.
+
+No R1–R8 check remains failing. Physical display gamut, physical browser/device certification, agreed device budgets and a genuine historical schema migration remain outside this refinement completion. No schema migration, push or deployment was performed.

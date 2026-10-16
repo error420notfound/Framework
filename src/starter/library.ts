@@ -94,7 +94,7 @@ export function createStarter(): LibraryDocument {
     ["font_family", "font.family.sans", ref("source_font"), "fontFamily"],
     [
       "font_weight",
-      "font.weight.medium",
+      "font.weight.semibold",
       { value: { type: "fontWeight", value: 600 } },
       "fontWeight",
     ],

@@ -1,11 +1,12 @@
+import { ColorEditor } from "./ColorEditor";
 import { useEffect, useState, useId, useRef, type ReactNode } from "react";
 import {
   cssValue,
-  hexColor,
   type Binding,
   type DesignValue,
   type ValueType,
 } from "../../domain/schema";
+import { propertyLabel } from "../resolution";
 import { resolve } from "../../domain/engine";
 import { useEditor } from "../../app/store";
 import { ArrowUpRight, Link2, Plus, RotateCcw } from "lucide-react";
@@ -37,43 +38,80 @@ export function CommitInput({
   onCommit,
   label,
   type = "text",
+  displayValue,
+  validate,
 }: {
   value: string | number;
-  onCommit: (value: string) => void;
+  onCommit: (v: string) => void;
   label: string;
   type?: string;
+  displayValue?: string;
+  validate?: (s: string) => string;
 }) {
-  const fieldId = useId();
-  const cancelNextBlur = useRef(false);
-  const [draft, setDraft] = useState(String(value));
+  const fieldId = useId(),
+    cancelNextBlur = useRef(false),
+    edited = useRef(false);
+  const shown = displayValue ?? String(value);
+  const [draft, setDraft] = useState(shown),
+    [error, setError] = useState("");
   useEffect(() => {
-    setDraft(String(value));
+    setDraft(shown);
+    setError("");
+    edited.current = false;
     trackDraft(fieldId, false);
-  }, [value, fieldId]);
+  }, [value, shown, fieldId]);
   useEffect(() => () => trackDraft(fieldId, false), [fieldId]);
   return (
-    <input
-      aria-label={label}
-      type={type}
-      value={draft}
-      onChange={(e) => {
-        setDraft(e.target.value);
-        trackDraft(fieldId, e.target.value !== String(value));
-      }}
-      onBlur={() => {
-        if (!cancelNextBlur.current && draft !== String(value)) onCommit(draft);
-        cancelNextBlur.current = false;
-        trackDraft(fieldId, false);
-      }}
-      onKeyDown={(e) => {
-        if (e.key === "Enter") e.currentTarget.blur();
-        if (e.key === "Escape") {
-          cancelNextBlur.current = true;
-          setDraft(String(value));
-          e.currentTarget.blur();
-        }
-      }}
-    />
+    <>
+      <input
+        aria-label={label}
+        type={type}
+        step={type === "number" ? "any" : undefined}
+        aria-invalid={!!error}
+        aria-describedby={error ? fieldId : undefined}
+        value={draft}
+        onChange={(e) => {
+          setDraft(e.target.value);
+          edited.current = true;
+          setError("");
+          trackDraft(fieldId, e.target.value !== String(value));
+        }}
+        onBlur={() => {
+          if (cancelNextBlur.current) {
+            cancelNextBlur.current = false;
+            trackDraft(fieldId, false);
+            return;
+          }
+          if (edited.current && draft !== String(value)) {
+            const message = validate?.(draft) ?? "";
+            if (message) {
+              setError(message);
+              trackDraft(fieldId, true);
+              return;
+            }
+            onCommit(draft);
+          }
+          edited.current = false;
+          setDraft(displayValue ?? draft);
+          trackDraft(fieldId, false);
+        }}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") e.currentTarget.blur();
+          if (e.key === "Escape") {
+            cancelNextBlur.current = true;
+            edited.current = false;
+            setDraft(shown);
+            setError("");
+            e.currentTarget.blur();
+          }
+        }}
+      />
+      {error ? (
+        <span className="form-error" id={fieldId} role="alert">
+          {error}
+        </span>
+      ) : null}
+    </>
   );
 }
 export function ValueEditor({
@@ -83,82 +121,8 @@ export function ValueEditor({
   value: DesignValue;
   onChange: (v: DesignValue) => void;
 }) {
-  if (value.type === "color") {
-    const hex =
-      value.space === "srgb"
-        ? "#" +
-          value.channels
-            .map((n) =>
-              Math.round(Math.min(1, Math.max(0, n)) * 255)
-                .toString(16)
-                .padStart(2, "0"),
-            )
-            .join("")
-        : "#2563eb";
-    return (
-      <div className="value-editor">
-        <div className="color-line">
-          <span
-            className="swatch large"
-            style={{ background: cssValue(value) }}
-          />
-          <CommitInput
-            label="Colour hex"
-            value={hex.toUpperCase()}
-            onCommit={(s) => {
-              if (/^#[0-9a-f]{6}$/i.test(s)) onChange(hexColor(s));
-              else
-                useEditor.setState({
-                  error: "Use a six-digit colour such as #2563EB",
-                });
-            }}
-          />
-        </div>
-        <Field label="Colour space">
-          <select
-            value={value.space}
-            onChange={(e) =>
-              onChange({
-                ...value,
-                space: e.target.value as typeof value.space,
-              })
-            }
-          >
-            <option value="srgb">sRGB</option>
-            <option value="oklch">OKLCH</option>
-            <option value="display-p3">Display P3</option>
-          </select>
-        </Field>
-        <div className="channels">
-          {value.channels.map((n, i) => (
-            <CommitInput
-              key={i}
-              type="number"
-              label={`Channel ${i + 1}`}
-              value={n}
-              onCommit={(s) => {
-                const channels = [...value.channels] as [
-                  number,
-                  number,
-                  number,
-                ];
-                channels[i] = Number(s);
-                onChange({ ...value, channels });
-              }}
-            />
-          ))}
-        </div>
-        <Field label="Alpha">
-          <CommitInput
-            label="Alpha"
-            type="number"
-            value={value.alpha}
-            onCommit={(s) => onChange({ ...value, alpha: Number(s) })}
-          />
-        </Field>
-      </div>
-    );
-  }
+  if (value.type === "color")
+    return <ColorEditor value={value} onChange={onChange} />;
   return (
     <div className="input-unit">
       <CommitInput
@@ -198,7 +162,9 @@ export function BindingEditor({
   onCreate,
   label,
   onReset,
+  onRemove,
   origin,
+  effective,
 }: {
   binding: Binding;
   type: ValueType;
@@ -206,7 +172,9 @@ export function BindingEditor({
   onCreate?: (type: ValueType) => void;
   label: string;
   onReset?: () => void;
+  onRemove?: () => void;
   origin?: string;
+  effective?: string;
 }) {
   const doc = useEditor((s) => s.doc),
     select = useEditor((s) => s.select);
@@ -232,8 +200,21 @@ export function BindingEditor({
   return (
     <div className="binding-editor">
       {origin ? <span className="binding-origin">{origin}</span> : null}
+      {effective && !effective.startsWith(origin + " ·") ? (
+        <span className="binding-origin">Effective preview · {effective}</span>
+      ) : null}
       <div className="binding-title">
-        <span>{label}</span>
+        <span>{propertyLabel(label)}</span>
+        {onRemove ? (
+          <button
+            className="icon-button"
+            aria-label={`Remove ${propertyLabel(label)} from shared style`}
+            title="Remove binding from shared style"
+            onClick={onRemove}
+          >
+            ×
+          </button>
+        ) : null}
         {onReset ? (
           <button
             className="icon-button"
@@ -261,7 +242,7 @@ export function BindingEditor({
             } else onChange({ ref: e.target.value });
           }}
         >
-          <option value="__literal">Local value</option>
+          <option value="__literal">Literal value</option>
           {choices.map((e) => (
             <option key={e.id} value={e.id}>
               {e.name}
@@ -288,9 +269,13 @@ export function BindingEditor({
           onChange={(value) => onChange({ value })}
         />
       ) : null}
-      <div className="binding-trace">
+      <details className="binding-trace">
+        <summary>
+          Resolved value ·{" "}
+          {resolved.length > 38 ? resolved.slice(0, 35) + "…" : resolved}
+        </summary>
         <span className="muted">
-          {"ref" in binding ? "From token" : "Local override"}
+          {"ref" in binding ? "Token reference" : "Literal value"}
         </span>
         {chain.slice(0, 2).map((id) => (
           <button
@@ -303,7 +288,7 @@ export function BindingEditor({
         ))}
         <span className="muted">Resolved value</span>
         <code>{resolved}</code>
-      </div>
+      </details>
     </div>
   );
 }

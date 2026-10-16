@@ -1,6 +1,7 @@
+import { dependencyDestination, downstreamReferences } from "../dependencies";
 import { ChevronDown, ArrowUpRight, CheckCircle2 } from "lucide-react";
 import { useEditor } from "../../app/store";
-import { resolve, usedBy, validate, impact } from "../../domain/engine";
+import { resolve, usedBy, validate } from "../../domain/engine";
 import { cssValue } from "../../domain/schema";
 import { lazy, Suspense } from "react";
 const MotionPanel = lazy(() =>
@@ -11,6 +12,34 @@ export function BottomPanel() {
   const e = doc.entities[selectedId];
   const uses = usedBy(doc, selectedId);
   const issues = validate(doc);
+  const downstream = downstreamReferences(doc, selectedId);
+  const consumer = (r: (typeof uses)[number], i: number) => {
+    const dest = dependencyDestination(doc, r);
+    return (
+      <div className="consumer" key={r.from + ":" + i}>
+        <button
+          onClick={() => {
+            select(dest.id, dest.scope);
+            if (dest.viewport) useEditor.setState({ viewport: dest.viewport });
+            if (dest.variants)
+              useEditor.setState({
+                variants: dest.variants,
+                states: dest.states ?? [],
+              });
+          }}
+        >
+          {dest.label}
+          <ArrowUpRight size={13} />
+        </button>
+        <details>
+          <summary>Technical details</summary>
+          <code>
+            {r.from} → {r.to} · {r.path.join(".")}
+          </code>
+        </details>
+      </div>
+    );
+  };
   let chain: string[] = [];
   let value = "";
   try {
@@ -40,6 +69,7 @@ export function BottomPanel() {
           <button
             key={tab}
             className={bottom === tab ? "active" : ""}
+            aria-expanded={bottom === tab && panelOpen}
             onClick={() =>
               useEditor.setState({
                 bottom: tab,
@@ -52,8 +82,9 @@ export function BottomPanel() {
           </button>
         ))}
         <span className="bottom-scope">
-          {e?.name ?? "Library document"} · {impact(doc, selectedId).downstream}{" "}
-          downstream
+          {e?.name ?? "Library document"} ·{" "}
+          {new Set(uses.map((r) => r.from)).size} direct · {downstream.length}{" "}
+          transitive downstream
         </span>
         <button
           className="icon-button"
@@ -117,21 +148,21 @@ export function BottomPanel() {
               </div>
               <div className="used-by">
                 <h3>
-                  Used by <span>{uses.length}</span>
+                  Direct consumers{" "}
+                  <span>{new Set(uses.map((r) => r.from)).size}</span>
                 </h3>
                 {uses.length ? (
-                  uses.map((r, i) => (
-                    <button key={i} onClick={() => select(r.from)}>
-                      <span>{doc.entities[r.from]?.name}</span>
-                      <span className="muted small">{r.path.join(".")}</span>
-                      <ArrowUpRight size={13} />
-                    </button>
-                  ))
+                  uses.map(consumer)
                 ) : (
                   <p className="small muted">
                     No direct consumers of this record.
                   </p>
                 )}
+                <h3>
+                  Transitive downstream consumers{" "}
+                  <span>{downstream.length}</span>
+                </h3>
+                {downstream.map(consumer)}
               </div>
             </>
           )}

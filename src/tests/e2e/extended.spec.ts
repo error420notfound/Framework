@@ -11,6 +11,9 @@ test("BrewPanel scenarios and narrow composition use reusable instances", async 
   await page.getByRole("button", { name: "Compositions", exact: true }).click();
   await page.locator(".browser-item").filter({ hasText: "BrewPanel" }).click();
   const preview = page.frameLocator('iframe[title="Composition preview"]');
+  await expect(
+    page.locator('iframe[title="Composition preview"]'),
+  ).toBeInViewport();
   await expect(preview.locator("body")).toContainText("18.2");
   for (const scenario of ["Disconnected", "Stale", "Unstable", "Overload"]) {
     await page.getByLabel("Brew scenario").selectOption(scenario);
@@ -37,8 +40,7 @@ test("state rules are authored and canvas parts are selectable", async ({
   await expect(page.getByLabel("Entity name")).toHaveValue("Label");
   await page.locator(".tree-item").filter({ hasText: "Button" }).click();
   await page.getByLabel("Binding scope").selectOption("state:hover");
-  await page.getByLabel("New binding property").selectOption("background");
-  await page.getByRole("button", { name: "Add binding", exact: true }).click();
+
   await page.getByLabel("background binding").selectOption("color_ink");
   await page.getByRole("checkbox", { name: "Hover", exact: true }).check();
   await expect(page.frameLocator("iframe").getByRole("button")).toHaveCSS(
@@ -79,7 +81,9 @@ test("motion playback, scrubbing, timing edits, reload and reduced alternative",
     page.getByRole("button", { name: "Saved", exact: true }),
   ).toBeVisible();
   await page.reload();
-  await page.getByRole("button", { name: "Motion", exact: true }).click();
+  await expect(
+    page.getByRole("button", { name: "Motion", exact: true }),
+  ).toHaveAttribute("aria-expanded", "true");
   await expect(page.getByLabel("Clip 1 duration", { exact: true })).toHaveValue(
     "0.6",
   );
