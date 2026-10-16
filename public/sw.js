@@ -59,3 +59,28 @@ self.addEventListener("fetch", (event) => {
     }
   })());
 });
+
+self.addEventListener("message", (event) => {
+  if (event.data?.type !== "PRECACHE_ASSETS" || !Array.isArray(event.data.urls)) return;
+  event.waitUntil((async () => {
+    const appUrl = self.registration.scope;
+    const cache = await caches.open(CACHE_NAME);
+    const urls = event.data.urls.filter((value) => {
+      if (typeof value !== "string") return false;
+      try {
+        const asset = new URL(value);
+        return asset.origin === self.location.origin && asset.href.startsWith(appUrl);
+      } catch {
+        return false;
+      }
+    });
+    await Promise.all(urls.map(async (url) => {
+      try {
+        const response = await fetch(url);
+        if (response.ok) await cache.put(url, response);
+      } catch {
+        // A temporarily unavailable asset can be cached on its next request.
+      }
+    }));
+  })());
+});

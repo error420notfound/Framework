@@ -11,11 +11,36 @@ createRoot(document.getElementById("root")!).render(
 void initialize();
 
 if ("serviceWorker" in navigator) {
+  const cacheLoadedAssets = () => {
+    const controller = navigator.serviceWorker.controller;
+    if (!controller) return;
+    const urls = performance
+      .getEntriesByType("resource")
+      .map((entry) => entry.name)
+      .filter((url) => {
+        try {
+          const asset = new URL(url);
+          return (
+            asset.origin === window.location.origin &&
+            asset.pathname.startsWith(import.meta.env.BASE_URL)
+          );
+        } catch {
+          return false;
+        }
+      });
+    controller.postMessage({ type: "PRECACHE_ASSETS", urls });
+  };
+
+  navigator.serviceWorker.addEventListener(
+    "controllerchange",
+    cacheLoadedAssets,
+  );
   window.addEventListener("load", () => {
     void navigator.serviceWorker
       .register(`${import.meta.env.BASE_URL}sw.js`, {
         scope: import.meta.env.BASE_URL,
       })
+      .then(cacheLoadedAssets)
       .catch((error: unknown) =>
         console.warn("Service worker registration failed", error),
       );
