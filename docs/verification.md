@@ -42,3 +42,4 @@ The approved visual direction was faithfully checked at native-size desktop and 
 Final navigation regression: library switching while autosaving edits, independent fork preservation and Escape cancellation pass in Chromium, Firefox and WebKit. The final shared-field changes also make pending drafts visible as Unsaved and protect them on close.
 
 Final full run: npm run test:e2e:all completed with 34 passed and 2 intentionally skipped (the Chromium-only parity matrix in Firefox/WebKit). All browser cases passed after the shared draft/save fixes.
+Final visual repair: normalized editor select appearance and chevrons after WebKit screenshots exposed clipped native select text. Selected values remain readable; native select semantics and keyboard operation are retained.
