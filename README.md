@@ -1,0 +1,37 @@
+# Formwork
+
+A local-first design-system editor with typed tokens, native component anatomy, isolated preview and standalone Astro output.
+
+## Run
+
+Requires Node 22.12+ (verified here with Node 24). In Windows PowerShell use `npm.cmd` if `npm.ps1` is blocked by execution policy.
+
+```sh
+npm install
+npm run dev
+```
+
+Open http://127.0.0.1:5173. The starter library opens in Components. Select a source/token/style to edit it, or select an anatomy part to bind properties, add/reorder/remove parts and author variant/state rules. Preview controls are temporary; inspectors edit persistent definitions and instances.
+
+The Export menu downloads an Astro package or asset-complete `.formwork` backup, imports a separate library, or creates an independent fork. IndexedDB autosave stays in this browser; portable downloads are the cross-device backup.
+
+## Verify
+
+```sh
+npm test
+npm run build
+npm run fixture:build
+npx playwright install chromium
+npm run test:e2e
+npx playwright install webkit
+npm run test:e2e:webkit
+npm run measure
+```
+
+The Astro fixture is real generated output, not a hand-authored duplicate. Run `npm run fixture:dev` and open http://127.0.0.1:4321. Browser tests build and serve static output on port 4322. The first static Button exports no React, Zustand, IndexedDB or GSAP. Authored motion adds GSAP only to motion-enabled output. Application code owns event listeners and device communication.
+
+See [architecture](docs/architecture.md), [implementation status](docs/implementation-plan.md), [tracker mapping](docs/notion-tracking.md) and [limitations](docs/limitations.md). No backend, auth, sync or external publishing is included.
+
+The starter includes native Button, Link, TextField and Checkbox plus text/layout primitives, WeightReadout, Timer and BrewPanel. Compositions preview connected, disconnected, stale, unstable and overload sample data. The Motion panel provides playback, scrubbing, duration-token bindings, named targets and reduced-motion alternatives. Export > Library releases creates immutable local snapshots and adopts them into independent drafts.
+
+Firefox is an optional additional check (`npm run test:e2e:firefox`); its complete authoring suite passes with normal process permissions (restricted sandbox execution caused blank-page crashes). WebKit checks are an engine proxy, not physical Safari/device certification. Device budgets remain unagreed. Source imports support the documented local Chroma adapter and font/image files; there is no live Chroma endpoint or Google Fonts catalogue integration.

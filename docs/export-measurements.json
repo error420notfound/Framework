@@ -1,0 +1,33 @@
+{
+  "purpose": "Reproducible size measurements, not device suitability certification",
+  "cases": {
+    "button": {
+      "files": 3,
+      "totalSourceBytes": 13796,
+      "cssBytes": 11072,
+      "cssGzipBytes": 1409,
+      "zipBytes": 2969,
+      "portableBytes": 2847,
+      "clientRuntime": "none",
+      "assets": []
+    },
+    "starterLibrary": {
+      "files": 16,
+      "totalSourceBytes": 45203,
+      "cssBytes": 28876,
+      "cssGzipBytes": 2473,
+      "zipBytes": 11827,
+      "portableBytes": 4404,
+      "clientRuntime": "none",
+      "assets": []
+    }
+  },
+  "builtFixtureAssets": {
+    "BrewPanel.astro_astro_type_script_index_0_lang.BtGP9SWf.js": 45,
+    "Button.astro_astro_type_script_index_0_lang.BtGP9SWf.js": 45,
+    "Button.C0O2t0nS.css": 24398,
+    "motion.DJ_R1pyQ.js": 71833,
+    "motion.UHMrjKZc.css": 24486
+  },
+  "budgetStatus": "No hardware/browser target or payload/runtime budget has been agreed. Device acceptance remains pending."
+}

@@ -1,0 +1,9 @@
+---
+import Text from '../generated/Text.astro';
+import Icon from '../generated/Icon.astro';
+import Link from '../generated/Link.astro';
+import TextField from '../generated/TextField.astro';
+import Checkbox from '../generated/Checkbox.astro';
+import BrewPanel from '../generated/BrewPanel.astro';
+---
+<!doctype html><html lang="en"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width"/><title>Formwork starter consumer</title><style>body{font:14px system-ui;margin:32px}section{margin-block:24px}h1{font-size:24px}</style></head><body data-fw-theme="light" data-fw-density="comfortable"><h1>Starter library</h1><section><Text content="Authored text"/> <Icon symbol="+"/> <Link label="Visit details" href="#details"/></section><section><TextField placeholder="Your name" aria-label="Your name"/><Checkbox label="Accept option"/></section><h2>BrewPanel</h2><BrewPanel data={{brew_weight:{weight:21.4,status:'Unstable · Settling'},brew_timer:{elapsed:'01:05'}}}/><p id="details">Application supplied data, reusable definitions.</p></body></html>
