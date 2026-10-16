@@ -1,4 +1,12 @@
 import { z } from "zod";
+import { parseIcon } from "../icons/runtime";
+const iconText = z.union([
+  z.string().max(2000),
+  z
+    .string()
+    .max(64000)
+    .refine((value) => !!parseIcon(value), "Invalid icon selection"),
+]);
 
 export const valueTypes = [
   "color",
@@ -100,11 +108,7 @@ export const propertyTypes: Record<string, ValueType> = {
   transitionDuration: "duration",
 };
 const bindings = z.record(z.string(), bindingSchema);
-const propertyValue = z.union([
-  z.string().max(2000),
-  z.boolean(),
-  z.number().finite(),
-]);
+const propertyValue = z.union([iconText, z.boolean(), z.number().finite()]);
 const patch = z.record(id, bindings);
 export const states = [
   "hover",
@@ -172,7 +176,7 @@ const entitySchema = z.discriminatedUnion("kind", [
     children: z.array(id),
     props: z
       .strictObject({
-        text: z.string().max(2000).optional(),
+        text: iconText.optional(),
         assetId: id.optional(),
         alt: z.string().max(500).optional(),
         href: z.string().max(2000).optional(),

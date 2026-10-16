@@ -16,7 +16,8 @@
     "fixture:dev": "astro dev --root fixtures/astro-consumer --host 127.0.0.1 --port 4321",
     "fixture:preview": "astro preview --root fixtures/astro-consumer --host 127.0.0.1 --port 4322",
     "fixture:test-server": "npm run fixture:build && npm run fixture:preview",
-    "measure": "tsx scripts/measure-exports.ts"
+    "measure": "tsx scripts/measure-exports.ts",
+    "icons:generate": "node scripts/generate-icons.mjs"
   },
   "dependencies": {
     "fflate": "^0.8.3",
@@ -35,6 +36,8 @@
     "@types/react-dom": "^19.3.0",
     "@vitejs/plugin-react": "^6.1.2",
     "astro": "^7.4.0",
+    "bootstrap-icons": "^1.13.2",
+    "lucide-static": "^1.58.0",
     "prettier": "^3.9.10",
     "tsx": "^4.23.15",
     "typescript": "^7.0.2",

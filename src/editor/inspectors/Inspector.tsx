@@ -1,3 +1,5 @@
+import { IconPicker } from "../controls/IconPicker";
+import { iconProperty } from "../../icons/catalog";
 import { useState } from "react";
 import {
   ArrowDown,
@@ -66,6 +68,45 @@ export function Inspector({
       : entity.kind === "component"
         ? entity
         : undefined;
+  const exposedIconProperty =
+    entity.kind === "node" && entity.primitive === "Icon"
+      ? component?.properties.find(
+          (property) => property.id === entity.expose.text,
+        )
+      : undefined;
+  const setNodeIcon = (text: string) => {
+    if (entity.kind !== "node") return;
+    command(
+      [
+        {
+          type: "update",
+          id: entity.id,
+          changes: { props: { ...entity.props, text } },
+        },
+        ...(component && exposedIconProperty
+          ? [
+              {
+                type: "update" as const,
+                id: component.id,
+                changes: {
+                  properties: component.properties.map((property) =>
+                    property.id === exposedIconProperty.id
+                      ? { ...property, default: text }
+                      : property,
+                  ),
+                },
+              },
+            ]
+          : []),
+      ],
+      "Update icon",
+    );
+    if (exposedIconProperty && useEditor.getState().doc !== doc) {
+      const previewValues = { ...useEditor.getState().previewValues };
+      delete previewValues[exposedIconProperty.id];
+      useEditor.setState({ previewValues });
+    }
+  };
   const bind = (p: string, b: Binding) => {
     if (entity.kind === "node" && scope !== "base" && component) {
       const [kind, key, value] = scope.split(":");
@@ -316,15 +357,26 @@ export function Inspector({
                 </select>
               </Field>
             ) : null}
-            <Field label="Text / fallback">
-              <CommitInput
+            {entity.primitive === "Icon" ? (
+              <IconPicker
+                key={entity.id}
                 label="Node text"
-                value={entity.props.text ?? ""}
-                onCommit={(text) =>
-                  update({ props: { ...entity.props, text } })
-                }
+                value={String(
+                  exposedIconProperty?.default ?? entity.props.text ?? "",
+                )}
+                onChange={setNodeIcon}
               />
-            </Field>
+            ) : (
+              <Field label="Text / fallback">
+                <CommitInput
+                  label="Node text"
+                  value={entity.props.text ?? ""}
+                  onCommit={(text) =>
+                    update({ props: { ...entity.props, text } })
+                  }
+                />
+              </Field>
+            )}
             {entity.primitive === "Grid" ? (
               <Field label="Grid columns">
                 <CommitInput
@@ -618,41 +670,57 @@ export function Inspector({
               if (c?.kind !== "component") return null;
               return (
                 <>
-                  {c.properties.map((p) => (
-                    <Field key={p.id} label={p.name}>
-                      {p.type === "boolean" ? (
-                        <input
-                          type="checkbox"
-                          checked={Boolean(
-                            entity.configuration[p.id] ?? p.default,
-                          )}
-                          onChange={(e) =>
-                            update({
-                              configuration: {
-                                ...entity.configuration,
-                                [p.id]: e.target.checked,
-                              },
-                            })
-                          }
-                        />
-                      ) : (
-                        <CommitInput
-                          label={`Instance ${p.name}`}
-                          value={String(
-                            entity.configuration[p.id] ?? p.default,
-                          )}
-                          onCommit={(s) =>
-                            update({
-                              configuration: {
-                                ...entity.configuration,
-                                [p.id]: p.type === "number" ? Number(s) : s,
-                              },
-                            })
-                          }
-                        />
-                      )}
-                    </Field>
-                  ))}
+                  {c.properties.map((p) =>
+                    iconProperty(doc, p.id, c.rootId) ? (
+                      <IconPicker
+                        key={p.id}
+                        label={`Instance ${p.name}`}
+                        value={String(entity.configuration[p.id] ?? p.default)}
+                        onChange={(value) =>
+                          update({
+                            configuration: {
+                              ...entity.configuration,
+                              [p.id]: value,
+                            },
+                          })
+                        }
+                      />
+                    ) : (
+                      <Field key={p.id} label={p.name}>
+                        {p.type === "boolean" ? (
+                          <input
+                            type="checkbox"
+                            checked={Boolean(
+                              entity.configuration[p.id] ?? p.default,
+                            )}
+                            onChange={(e) =>
+                              update({
+                                configuration: {
+                                  ...entity.configuration,
+                                  [p.id]: e.target.checked,
+                                },
+                              })
+                            }
+                          />
+                        ) : (
+                          <CommitInput
+                            label={`Instance ${p.name}`}
+                            value={String(
+                              entity.configuration[p.id] ?? p.default,
+                            )}
+                            onCommit={(s) =>
+                              update({
+                                configuration: {
+                                  ...entity.configuration,
+                                  [p.id]: p.type === "number" ? Number(s) : s,
+                                },
+                              })
+                            }
+                          />
+                        )}
+                      </Field>
+                    ),
+                  )}
                   <BindingEditor
                     label="Instance fill"
                     type="color"
@@ -855,7 +923,7 @@ function ComponentInspector({
   component: ComponentEntity;
   onCreate: (r: CreateRequest) => void;
 }) {
-  const { command, select } = useEditor();
+  const { command, select, doc } = useEditor();
   const [axisName, setAxisName] = useState("tone");
   const [choices, setChoices] = useState("neutral, accent");
   const update = (changes: Partial<ComponentEntity>) =>
@@ -868,37 +936,52 @@ function ComponentInspector({
       <div className="section-divider">
         <h3>Public properties</h3>
       </div>
-      {c.properties.map((p, index) => (
-        <Field key={p.id} label={p.name}>
-          {p.type === "boolean" ? (
-            <input
-              type="checkbox"
-              checked={!!p.default}
-              onChange={(e) =>
-                update({
-                  properties: c.properties.map((v, i) =>
-                    i === index ? { ...v, default: e.target.checked } : v,
-                  ),
-                })
-              }
-            />
-          ) : (
-            <CommitInput
-              label={`Default ${p.name}`}
-              value={String(p.default)}
-              onCommit={(v) =>
-                update({
-                  properties: c.properties.map((p, i) =>
-                    i === index
-                      ? { ...p, default: p.type === "number" ? Number(v) : v }
-                      : p,
-                  ),
-                })
-              }
-            />
-          )}
-        </Field>
-      ))}
+      {c.properties.map((p, index) =>
+        iconProperty(doc, p.id, c.rootId) ? (
+          <IconPicker
+            key={p.id}
+            label={`Default ${p.name}`}
+            value={String(p.default)}
+            onChange={(value) =>
+              update({
+                properties: c.properties.map((entry, i) =>
+                  i === index ? { ...entry, default: value } : entry,
+                ),
+              })
+            }
+          />
+        ) : (
+          <Field key={p.id} label={p.name}>
+            {p.type === "boolean" ? (
+              <input
+                type="checkbox"
+                checked={!!p.default}
+                onChange={(e) =>
+                  update({
+                    properties: c.properties.map((v, i) =>
+                      i === index ? { ...v, default: e.target.checked } : v,
+                    ),
+                  })
+                }
+              />
+            ) : (
+              <CommitInput
+                label={`Default ${p.name}`}
+                value={String(p.default)}
+                onCommit={(v) =>
+                  update({
+                    properties: c.properties.map((p, i) =>
+                      i === index
+                        ? { ...p, default: p.type === "number" ? Number(v) : v }
+                        : p,
+                    ),
+                  })
+                }
+              />
+            )}
+          </Field>
+        ),
+      )}
       <button
         className="text-link"
         onClick={() => {

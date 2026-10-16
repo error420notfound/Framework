@@ -1,3 +1,5 @@
+import { IconPicker } from "../controls/IconPicker";
+import { iconProperty } from "../../icons/catalog";
 import { useMemo } from "react";
 import { useEditor } from "../../app/store";
 import { previewHtml } from "../../renderer/compiler";
@@ -197,67 +199,80 @@ export function Canvas() {
         <h3>Instance content</h3>
         {c.properties
           .filter((p) => !["disabled", "loading"].includes(p.id))
-          .map((p) => (
-            <label className="inline-field" key={p.id}>
-              <span>{p.name}</span>
-              {p.type === "boolean" ? (
-                <input
-                  type="checkbox"
-                  checked={Boolean(previewValues[p.id] ?? p.default)}
-                  onChange={(e) =>
-                    useEditor.setState({
-                      previewValues: {
-                        ...previewValues,
-                        [p.id]: e.target.checked,
-                      },
-                    })
-                  }
-                />
-              ) : p.type === "asset" ? (
-                <select
-                  aria-label={`Preview ${p.name}`}
-                  value={String(previewValues[p.id] ?? p.default)}
-                  onChange={(e) =>
-                    useEditor.setState({
-                      previewValues: {
-                        ...previewValues,
-                        [p.id]: e.target.value,
-                      },
-                    })
-                  }
-                >
-                  <option value="">No asset</option>
-                  {Object.values(doc.entities)
-                    .filter(
-                      (e) =>
-                        e.kind === "asset" && e.mediaType.startsWith("image"),
-                    )
-                    .map((a) => (
-                      <option key={a.id} value={a.id}>
-                        {a.name}
-                      </option>
-                    ))}
-                </select>
-              ) : (
-                <input
-                  type={p.type === "number" ? "number" : "text"}
-                  aria-label={`Preview ${p.name}`}
-                  value={String(previewValues[p.id] ?? p.default)}
-                  onChange={(e) =>
-                    useEditor.setState({
-                      previewValues: {
-                        ...previewValues,
-                        [p.id]:
-                          p.type === "number"
-                            ? Number(e.target.value)
-                            : e.target.value,
-                      },
-                    })
-                  }
-                />
-              )}
-            </label>
-          ))}
+          .map((p) =>
+            iconProperty(doc, p.id, c.rootId) ? (
+              <IconPicker
+                key={id + "-" + p.id}
+                label={`Preview ${p.name}`}
+                value={String(previewValues[p.id] ?? p.default)}
+                onChange={(value) =>
+                  useEditor.setState({
+                    previewValues: { ...previewValues, [p.id]: value },
+                  })
+                }
+              />
+            ) : (
+              <label className="inline-field" key={p.id}>
+                <span>{p.name}</span>
+                {p.type === "boolean" ? (
+                  <input
+                    type="checkbox"
+                    checked={Boolean(previewValues[p.id] ?? p.default)}
+                    onChange={(e) =>
+                      useEditor.setState({
+                        previewValues: {
+                          ...previewValues,
+                          [p.id]: e.target.checked,
+                        },
+                      })
+                    }
+                  />
+                ) : p.type === "asset" ? (
+                  <select
+                    aria-label={`Preview ${p.name}`}
+                    value={String(previewValues[p.id] ?? p.default)}
+                    onChange={(e) =>
+                      useEditor.setState({
+                        previewValues: {
+                          ...previewValues,
+                          [p.id]: e.target.value,
+                        },
+                      })
+                    }
+                  >
+                    <option value="">No asset</option>
+                    {Object.values(doc.entities)
+                      .filter(
+                        (e) =>
+                          e.kind === "asset" && e.mediaType.startsWith("image"),
+                      )
+                      .map((a) => (
+                        <option key={a.id} value={a.id}>
+                          {a.name}
+                        </option>
+                      ))}
+                  </select>
+                ) : (
+                  <input
+                    type={p.type === "number" ? "number" : "text"}
+                    aria-label={`Preview ${p.name}`}
+                    value={String(previewValues[p.id] ?? p.default)}
+                    onChange={(e) =>
+                      useEditor.setState({
+                        previewValues: {
+                          ...previewValues,
+                          [p.id]:
+                            p.type === "number"
+                              ? Number(e.target.value)
+                              : e.target.value,
+                        },
+                      })
+                    }
+                  />
+                )}
+              </label>
+            ),
+          )}
       </div>
     </section>
   );

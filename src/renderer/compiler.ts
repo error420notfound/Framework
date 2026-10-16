@@ -1,3 +1,4 @@
+import { renderIcon } from "../icons/runtime";
 import {
   cssValue,
   isRef,
@@ -234,7 +235,7 @@ export function renderComponent(
     const overrides = options.overrides?.[node.id];
     if (overrides)
       attrs += ` style="${escapeHtml(declarations(doc, overrides))}"`;
-    return `<${n.tag}${attrs}>${n.tag === "input" || n.tag === "img" ? "" : escapeHtml(text) + n.children.map((c) => render(c)).join("") + `</${n.tag}>`}`;
+    return `<${n.tag}${attrs}>${n.tag === "input" || n.tag === "img" ? "" : (node.primitive === "Icon" ? renderIcon(text) : escapeHtml(text)) + n.children.map((c) => render(c)).join("") + `</${n.tag}>`}`;
   }
   return render(compiled.root, true);
 }
@@ -256,5 +257,5 @@ export function previewHtml(
   const bg = doc.entities.surface
     ? cssValue(resolve(doc, { ref: "surface" }, context).value)
     : "#fff";
-  return `<!doctype html><html lang="en" data-fw-theme="${context.themeId ?? doc.themeId}" data-fw-density="${context.densityId ?? doc.densityId}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src data:; font-src data:; style-src 'unsafe-inline';"><style>html{background:${bg};color-scheme:${context.themeId === "dark" ? "dark" : "light"}}body{margin:0;min-height:280px;display:flex;align-items:center;justify-content:center;padding:36px;font:14px system-ui}${css}</style></head><body><main style="max-width:${width}px;${options.values?.fullWidth ? "width:100%" : ""}">${renderComponent(doc, c, options)}</main></body></html>`;
+  return `<!doctype html><html lang="en" data-fw-theme="${context.themeId ?? doc.themeId}" data-fw-density="${context.densityId ?? doc.densityId}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src data:; font-src data: https://fonts.gstatic.com; style-src 'unsafe-inline' https://fonts.googleapis.com;"><style>html{background:${bg};color-scheme:${context.themeId === "dark" ? "dark" : "light"}}body{margin:0;min-height:280px;display:flex;align-items:center;justify-content:center;padding:36px;font:14px system-ui}${css}</style></head><body><main style="max-width:${width}px;${options.values?.fullWidth ? "width:100%" : ""}">${renderComponent(doc, c, options)}</main></body></html>`;
 }

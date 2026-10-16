@@ -6,3 +6,4 @@ playwright-report/
 *.tsbuildinfo
 fixtures/astro-consumer/src/generated/
 fixtures/astro-consumer/src/generated-motion/
+fixtures/astro-consumer/ICON-LICENSES.txt

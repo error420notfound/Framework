@@ -1,3 +1,5 @@
+import iconLicenses from "../icons/licenses.json";
+import iconRuntimeSource from "../icons/runtime-source.json";
 import {
   compileComponent,
   escapeHtml,
@@ -11,6 +13,12 @@ import { motionRuntime } from "./motion";
 
 export function astroFiles(doc: LibraryDocument): Record<string, Uint8Array> {
   const files: Record<string, Uint8Array> = {};
+  files["components/icons.js"] = strToU8(iconRuntimeSource);
+  files["ICON-LICENSES.txt"] = strToU8(
+    Object.entries(iconLicenses)
+      .map(([name, license]) => name + "\n\n" + license)
+      .join("\n\n"),
+  );
   let css = tokenCss(doc);
   const names = new Map<string, string>();
   const usedNames = new Set<string>();
@@ -70,6 +78,8 @@ export function astroFiles(doc: LibraryDocument): Record<string, Uint8Array> {
       let content = node.expose.text
         ? `{values[${expression(node.expose.text)}]}`
         : `{${expression(node.props.text ?? "")}}`;
+      if (node.primitive === "Icon")
+        content = `<Fragment set:html={renderIcon(${node.expose.text ? `values[${expression(node.expose.text)}]` : expression(node.props.text ?? "")})} />`;
       content += n.children.map((ch) => markup(ch)).join("");
       if (node.slot)
         content =
@@ -85,7 +95,7 @@ export function astroFiles(doc: LibraryDocument): Record<string, Uint8Array> {
     }
     const propertyNames = component.properties.map((p) => p.id);
     const axisNames = Object.keys(component.axes);
-    const source = `---\n// Generated from Formwork anatomy; no editor or client runtime.\nimport './library.css';\nconst { type, nodeOverrides = {}, ...incoming } = Astro.props;\nconst safeHref = value => /^(https?:\\/\\/|mailto:|tel:|\\/|#)/.test(String(value)) ? value : '#';\nconst defaults = ${expression(defaults as any)};\nconst variants = { ...${expression(component.defaults as any)}, ...Object.fromEntries(Object.entries(incoming).filter(([key]) => ${expression(axisNames as any)}.includes(key))) };\nconst values = { ...defaults, ...Object.fromEntries(Object.entries(incoming).filter(([key]) => ${expression(propertyNames as any)}.includes(key))) };\nconst nativeProps = Object.fromEntries(Object.entries(incoming).filter(([key]) => !${expression([...propertyNames, ...axisNames] as any)}.includes(key)));\nconst assetUrls = ${JSON.stringify(
+    const source = `---\n// Generated from Formwork anatomy; no editor or client runtime.\nimport './library.css';\nimport { renderIcon } from './icons.js';\nconst { type, nodeOverrides = {}, ...incoming } = Astro.props;\nconst safeHref = value => /^(https?:\\/\\/|mailto:|tel:|\\/|#)/.test(String(value)) ? value : '#';\nconst defaults = ${expression(defaults as any)};\nconst variants = { ...${expression(component.defaults as any)}, ...Object.fromEntries(Object.entries(incoming).filter(([key]) => ${expression(axisNames as any)}.includes(key))) };\nconst values = { ...defaults, ...Object.fromEntries(Object.entries(incoming).filter(([key]) => ${expression(propertyNames as any)}.includes(key))) };\nconst nativeProps = Object.fromEntries(Object.entries(incoming).filter(([key]) => !${expression([...propertyNames, ...axisNames] as any)}.includes(key)));\nconst assetUrls = ${JSON.stringify(
       Object.fromEntries(
         Object.values(doc.entities)
           .filter((e) => e.kind === "asset")
