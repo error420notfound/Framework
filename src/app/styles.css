@@ -2037,3 +2037,8 @@ select,
   outline: 2px solid var(--ed-accent);
   outline-offset: 1px;
 }
+
+/* Keep controls clear of the notch and home indicator in installed iOS mode. */
+.app {
+  padding-block: env(safe-area-inset-top) env(safe-area-inset-bottom);
+}
