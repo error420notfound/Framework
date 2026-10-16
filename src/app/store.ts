@@ -37,6 +37,7 @@ type EditorState = {
   saveState: "Loading" | "Unsaved" | "Saving" | "Saved" | "Failed";
   error: string;
   ready: boolean;
+  dirtyFields: Record<string, boolean>;
   bottom: "Dependencies" | "Validation" | "Motion";
   panelOpen: boolean;
   command: (commands: Command[], label: string) => void;
@@ -72,6 +73,7 @@ export const useEditor = create<EditorState>((set, get) => ({
   saveState: "Loading",
   error: "",
   ready: false,
+  dirtyFields: {},
   bottom: "Dependencies",
   panelOpen: true,
   command(commands, label) {

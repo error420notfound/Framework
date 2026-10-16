@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useState, useId, useRef, type ReactNode } from "react";
 import {
   cssValue,
   hexColor,
@@ -24,6 +24,14 @@ export function Field({
     </label>
   );
 }
+function trackDraft(id: string, dirty: boolean) {
+  const current = useEditor.getState().dirtyFields;
+  if (Boolean(current[id]) === dirty) return;
+  const dirtyFields = { ...current };
+  if (dirty) dirtyFields[id] = true;
+  else delete dirtyFields[id];
+  useEditor.setState({ dirtyFields });
+}
 export function CommitInput({
   value,
   onCommit,
@@ -35,20 +43,32 @@ export function CommitInput({
   label: string;
   type?: string;
 }) {
+  const fieldId = useId();
+  const cancelNextBlur = useRef(false);
   const [draft, setDraft] = useState(String(value));
-  useEffect(() => setDraft(String(value)), [value]);
+  useEffect(() => {
+    setDraft(String(value));
+    trackDraft(fieldId, false);
+  }, [value, fieldId]);
+  useEffect(() => () => trackDraft(fieldId, false), [fieldId]);
   return (
     <input
       aria-label={label}
       type={type}
       value={draft}
-      onChange={(e) => setDraft(e.target.value)}
+      onChange={(e) => {
+        setDraft(e.target.value);
+        trackDraft(fieldId, e.target.value !== String(value));
+      }}
       onBlur={() => {
-        if (draft !== String(value)) onCommit(draft);
+        if (!cancelNextBlur.current && draft !== String(value)) onCommit(draft);
+        cancelNextBlur.current = false;
+        trackDraft(fieldId, false);
       }}
       onKeyDown={(e) => {
         if (e.key === "Enter") e.currentTarget.blur();
         if (e.key === "Escape") {
+          cancelNextBlur.current = true;
           setDraft(String(value));
           e.currentTarget.blur();
         }

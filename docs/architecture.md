@@ -32,7 +32,7 @@ Commands are applied to a cloned candidate and validated once at the transaction
 | Theme               | shared structure → additional assignment map on one independent axis               |
 | Fork                | source document → independent document ID with source identity/revision provenance |
 
-Zustand separates document state, selection/navigation, preview controls and snapshot undo/redo. Field edits commit on blur/Enter; each multi-command operation is one undo transaction. Escape restores the uncommitted field draft. Selection and preview controls never add history.
+Zustand separates document state, selection/navigation, preview controls and snapshot undo/redo. Field edits commit on blur/Enter; each multi-command operation is one undo transaction. Escape restores the uncommitted field draft without committing it. Dirty field drafts contribute to the visible Unsaved state and before-unload protection. Ctrl+S and library navigation commit the active field before saving; navigation reads the current store and captures its requested destination before awaiting the write. Selection and preview controls never add history.
 
 ## Preview and Astro
 

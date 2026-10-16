@@ -49,7 +49,20 @@ const navIcons = [
 ];
 export function App() {
   const state = useEditor();
-  const { doc, workspace, selectedId, saveState, error, ready } = state;
+  const {
+    doc,
+    workspace,
+    selectedId,
+    saveState: persistedSaveState,
+    error,
+    ready,
+  } = state;
+  const saveState =
+    Object.values(state.dirtyFields).some(Boolean) &&
+    persistedSaveState !== "Failed" &&
+    persistedSaveState !== "Loading"
+      ? "Unsaved"
+      : persistedSaveState;
   const [create, setCreate] = useState<CreateRequest | null>(null),
     [menu, setMenu] = useState(false),
     [leftOpen, setLeftOpen] = useState(false),
@@ -63,6 +76,7 @@ export function App() {
       const target = e.target as HTMLElement;
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") {
         e.preventDefault();
+        target.blur();
         void useEditor.getState().save();
       }
       if (
@@ -79,7 +93,10 @@ export function App() {
     window.addEventListener("keydown", key);
     const leave = (e: BeforeUnloadEvent) => {
       if (
-        ["Unsaved", "Saving", "Failed"].includes(useEditor.getState().saveState)
+        ["Unsaved", "Saving", "Failed"].includes(
+          useEditor.getState().saveState,
+        ) ||
+        Object.values(useEditor.getState().dirtyFields).some(Boolean)
       ) {
         e.preventDefault();
       }
@@ -94,8 +111,10 @@ export function App() {
     if (pending) review.current?.showModal();
   }, [pending]);
   async function preserveThen(action: () => void) {
-    if (saveState !== "Saved") {
-      await state.save();
+    (document.activeElement as HTMLElement | null)?.blur();
+    const current = useEditor.getState();
+    if (current.saveState !== "Saved") {
+      await current.save();
       if (useEditor.getState().saveState !== "Saved") return;
     }
     action();
@@ -157,9 +176,10 @@ export function App() {
             <select
               aria-label="Open library"
               value={doc.id}
-              onChange={(e) =>
-                void preserveThen(() => state.openLibrary(e.target.value))
-              }
+              onChange={(e) => {
+                const libraryId = e.target.value;
+                void preserveThen(() => state.openLibrary(libraryId));
+              }}
             >
               {state.libraries.map((l) => (
                 <option key={l.id} value={l.id}>
