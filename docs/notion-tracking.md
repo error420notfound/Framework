@@ -17,4 +17,4 @@ Verified Status options: Not started / In progress / Done. Kind options: Action 
 | 5     | 3fbea1d9945581a28ca1f1163059295f | 3fbea1d9945581f09403d8eed4e35d60; 3fbea1d99455811bbf8dddf13621d45b |
 | 6     | 3fbea1d9945581b1a266d2820b01ed11 | 3fbea1d9945581cfb78bee2b9b6e5797; 3fbea1d9945581b98afec79ef59777fc |
 
-Confirmed writes at implementation start: project, Stage 1 Group and schema Action set In progress. Remaining status/evidence sync pending acceptance review. No duplicates or new backlog pages were created. No commit references exist yet.
+Confirmed final sync: all twelve existing Actions have evidence; eleven are Done and the release/migrations/device-budget Action is In progress. Groups 1-5 are Done; Group 6 and the project remain In progress. A read-only grouped query verified these counts. Activity record: https://app.notion.com/p/3fbea1d99455818faf1dedd561be9a81. Local implementation commit: aa1789e. No duplicate project/backlog pages, estimates or schedules were created. Pending writes: none.
