@@ -1,3 +1,4 @@
+import { convertColor, type Color } from "../domain/color";
 import { openDB } from "idb";
 import { strFromU8, strToU8, unzipSync, zipSync } from "fflate";
 import { parseDocument } from "../domain/engine";
@@ -43,7 +44,7 @@ export const indexedDbAdapter: PersistenceAdapter = {
   async loadAll() {
     const db = await database();
     const records = await db.getAll("libraries");
-    return records.map(parseDocument);
+    return records.map((record) => parseDocument(normalizeColors(record)));
   },
   async save(doc) {
     const db = await database();
@@ -72,7 +73,7 @@ export function importPortable(bytes: Uint8Array): LibraryDocument {
     .replace(/^\uFEFF/, "")
     .trimStart();
   if (possibleJson.startsWith("{"))
-    return parseDocument(JSON.parse(possibleJson));
+    return parseDocument(normalizeColors(JSON.parse(possibleJson)));
   let total = 0;
   const files = unzipSync(bytes, {
     filter(file) {
@@ -95,7 +96,7 @@ export function importPortable(bytes: Uint8Array): LibraryDocument {
         if (!data) throw new Error(`Missing asset ${a.name}`);
         a.data = bytesToBase64(data);
       }
-  return parseDocument(input);
+  return parseDocument(normalizeColors(input));
 }
 export function bytesToBase64(bytes: Uint8Array): string {
   let binary = "";
@@ -116,4 +117,23 @@ export function download(
   a.download = name;
   a.click();
   setTimeout(() => URL.revokeObjectURL(url), 10000);
+}
+
+// Normalize editable libraries on load/import, including nested overrides and rules.
+function normalizeColors(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(normalizeColors);
+  if (!value || typeof value !== "object") return value;
+  const object = value as Record<string, unknown>;
+  if (
+    object.type === "color" &&
+    ["srgb", "display-p3", "oklch"].includes(String(object.space)) &&
+    Array.isArray(object.channels) &&
+    object.channels.length === 3 &&
+    object.channels.every((n) => typeof n === "number" && Number.isFinite(n)) &&
+    typeof object.alpha === "number"
+  )
+    return convertColor(object as Color, "oklch");
+  return Object.fromEntries(
+    Object.entries(object).map(([key, child]) => [key, normalizeColors(child)]),
+  );
 }

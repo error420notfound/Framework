@@ -1,3 +1,4 @@
+import { convertColor } from "./color";
 import { z } from "zod";
 import { parseIcon } from "../icons/runtime";
 const iconText = z.union([
@@ -345,16 +346,20 @@ export type Diagnostic = { code: string; message: string; entityId?: string };
 export const newId = (prefix = "e") =>
   `${prefix}_${crypto.randomUUID().replaceAll("-", "")}`;
 export const isRef = (b: Binding): b is { ref: string } => "ref" in b;
-export const hexColor = (hex: string): DesignValue => ({
-  type: "color",
-  space: "srgb",
-  channels: [
-    parseInt(hex.slice(1, 3), 16) / 255,
-    parseInt(hex.slice(3, 5), 16) / 255,
-    parseInt(hex.slice(5, 7), 16) / 255,
-  ],
-  alpha: 1,
-});
+export const hexColor = (hex: string): DesignValue =>
+  convertColor(
+    {
+      type: "color",
+      space: "srgb",
+      channels: [
+        parseInt(hex.slice(1, 3), 16) / 255,
+        parseInt(hex.slice(3, 5), 16) / 255,
+        parseInt(hex.slice(5, 7), 16) / 255,
+      ],
+      alpha: 1,
+    },
+    "oklch",
+  );
 export function cssValue(v: DesignValue): string {
   if (v.type === "color") {
     const [a, b, c] = v.channels;

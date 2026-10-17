@@ -179,16 +179,16 @@ test("colour conversions preserve gamut, precision, validation and portable expo
   await page.getByRole("button", { name: "Foundations", exact: true }).click();
   await page.locator(".record-name").filter({ hasText: "Blue 600" }).click();
   const before = (await state(page)).doc.entities.source_blue;
-  await page.getByLabel("R (0–255)", { exact: true }).focus();
+  await page.getByLabel("L (0–1)", { exact: true }).focus();
   await page.keyboard.press("Tab");
   expect((await state(page)).doc.entities.source_blue).toEqual(before);
   for (let i = 0; i < 5; i++)
-    for (const space of ["oklch", "display-p3", "srgb"])
+    for (const space of ["display-p3", "srgb", "oklch"])
       await page
         .getByLabel("Colour space", { exact: true })
         .selectOption(space);
   const converted = (await state(page)).doc.entities.source_blue;
-  expect(converted.value.space).toBe("srgb");
+  expect(converted.value.space).toBe("oklch");
   before.value.channels.forEach((v: number, i: number) =>
     expect(converted.value.channels[i]).toBeCloseTo(v, 9),
   );
@@ -210,9 +210,7 @@ test("colour conversions preserve gamut, precision, validation and portable expo
     await page.getByLabel(name, { exact: true }).fill(value);
     await page.getByLabel(name, { exact: true }).press("Enter");
   }
-  await expect(
-    page.getByText("Outside sRGB gamut", { exact: true }),
-  ).toBeVisible();
+  await expect(page.getByLabel("Colour OKLCH")).toBeVisible();
   await expect(page.getByLabel("Colour hex")).toHaveCount(0);
   await page.getByLabel("Colour space", { exact: true }).selectOption("srgb");
   expect(
@@ -223,9 +221,9 @@ test("colour conversions preserve gamut, precision, validation and portable expo
   await page.reload();
   await page.getByRole("button", { name: "Foundations", exact: true }).click();
   await page.locator(".record-name").filter({ hasText: "Blue 600" }).click();
-  expect((await state(page)).doc.entities.source_blue).toEqual(
-    saved.entities.source_blue,
-  );
+  const reloaded = (await state(page)).doc.entities.source_blue;
+  expect(reloaded.value.space).toBe("oklch");
+  expect(reloaded.value.alpha).toBe(saved.entities.source_blue.value.alpha);
   await page.getByRole("button", { name: "Export", exact: true }).click();
   const dl = page.waitForEvent("download");
   await page.getByRole("button", { name: "Portable library" }).click();

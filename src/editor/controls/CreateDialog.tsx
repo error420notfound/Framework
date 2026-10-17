@@ -3,7 +3,6 @@ import { useEffect, useRef, useState } from "react";
 import { X } from "lucide-react";
 import { useEditor } from "../../app/store";
 import {
-  hexColor,
   newId,
   primitives,
   valueTypes,
@@ -15,7 +14,12 @@ import { Field } from "./Fields";
 import type { CreateRequest } from "../inspectors/Inspector";
 import { componentForNode, type Command } from "../../domain/engine";
 const defaultValues: Record<ValueType, DesignValue> = {
-  color: hexColor("#2563EB"),
+  color: {
+    type: "color",
+    space: "oklch",
+    channels: [0.5461497233109911, 0.21520774805039064, 262.88091714087415],
+    alpha: 1,
+  } as const,
   dimension: { type: "dimension", value: 16, unit: "px" },
   number: { type: "number", value: 1 },
   fontFamily: { type: "fontFamily", value: "system-ui, sans-serif" },

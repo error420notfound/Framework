@@ -90,7 +90,7 @@ export function InstanceAppearance({ instance }: { instance: Instance }) {
                     winner?.binding ?? {
                       value: {
                         type: "color",
-                        space: "srgb",
+                        space: "oklch",
                         channels: [0, 0, 0],
                         alpha: 0,
                       },

@@ -4,7 +4,6 @@ import {
   type Entity,
   type LibraryDocument,
   type NodeEntity,
-  hexColor,
 } from "../domain/schema";
 import { register } from "./registration";
 import { dim, ref } from "./library";
@@ -119,7 +118,12 @@ export function authorExpansion(input: LibraryDocument): LibraryDocument {
       name: "Red 600",
       kind: "source",
       sourceType: "color",
-      value: hexColor("#dc2626"),
+      value: {
+        type: "color",
+        space: "oklch",
+        channels: [0.5770988158658138, 0.2151567338031568, 27.32504873954491],
+        alpha: 1,
+      } as const,
     },
     {
       id: "color_danger",
@@ -186,7 +190,17 @@ export function authorExpansion(input: LibraryDocument): LibraryDocument {
             when: { variants: { emphasis: "ghost" }, states: [] },
             patch: {
               button_root: {
-                background: { value: { ...hexColor("#000000"), alpha: 0 } },
+                background: {
+                  value: {
+                    ...({
+                      type: "color",
+                      space: "oklch",
+                      channels: [0, 0, 0],
+                      alpha: 1,
+                    } as const),
+                    alpha: 0,
+                  },
+                },
                 color: ref("text_primary"),
                 borderWidth: dim(0),
               },

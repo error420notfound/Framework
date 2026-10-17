@@ -1,5 +1,5 @@
-﻿import { convertColor, srgbHex, type Color } from "../../domain/color";
-import { cssValue, hexColor } from "../../domain/schema";
+﻿import { convertColor, type Color } from "../../domain/color";
+import { cssValue } from "../../domain/schema";
 import { CommitInput, Field } from "./Fields";
 function ColorNumber({
   label,
@@ -36,6 +36,31 @@ function ColorNumber({
     </Field>
   );
 }
+function parseOklch(text: string): Color | undefined {
+  const match =
+    /^oklch\(\s*([\d.e+-]+)\s+([\d.e+-]+)\s+([\d.e+-]+)(?:\s*\/\s*([\d.e+-]+))?\s*\)$/i.exec(
+      text.trim(),
+    );
+  if (!match) return;
+  const [l, c, h, alpha] = [
+    Number(match[1]),
+    Number(match[2]),
+    Number(match[3]),
+    Number(match[4] ?? 1),
+  ];
+  if (
+    ![l, c, h, alpha].every(Number.isFinite) ||
+    l < 0 ||
+    l > 1 ||
+    c < 0 ||
+    h < 0 ||
+    h > 360 ||
+    alpha < 0 ||
+    alpha > 1
+  )
+    return;
+  return { type: "color", space: "oklch", channels: [l, c, h], alpha };
+}
 export function ColorEditor({
   value,
   onChange,
@@ -43,7 +68,7 @@ export function ColorEditor({
   value: Color;
   onChange: (c: Color) => void;
 }) {
-  const hex = srgbHex(value);
+  const oklch = convertColor(value, "oklch");
   const names =
     value.space === "oklch"
       ? ["L (0–1)", "C (≥ 0)", "H (0–360°)"]
@@ -58,29 +83,19 @@ export function ColorEditor({
           aria-label="Colour swatch"
           style={{ background: cssValue(value) }}
         />
-        {hex ? (
-          <CommitInput
-            label="Colour hex"
-            value={hex}
-            validate={(s) =>
-              /^#[0-9a-f]{6}$/i.test(s)
-                ? ""
-                : "Use six hexadecimal digits, such as #2563EB."
-            }
-            onCommit={(s) => {
-              if (/^#[0-9a-f]{6}$/i.test(s)) {
-                onChange(
-                  convertColor(
-                    { ...hexColor(s), alpha: value.alpha } as Color,
-                    value.space,
-                  ),
-                );
-              }
-            }}
-          />
-        ) : (
-          <span className="small muted">Outside sRGB gamut</span>
-        )}
+        <CommitInput
+          label="Colour OKLCH"
+          value={cssValue(oklch)}
+          validate={(s) =>
+            parseOklch(s)
+              ? ""
+              : "Use oklch(L C H / alpha), with L and alpha from 0 to 1, C ≥ 0 and H from 0 to 360."
+          }
+          onCommit={(s) => {
+            const color = parseOklch(s);
+            if (color) onChange(color);
+          }}
+        />
       </div>
       <Field label="Colour space">
         <select
@@ -134,17 +149,6 @@ export function ColorEditor({
           : "RGB ranges describe the display gamut. Extended channel values are preserved during conversion."}{" "}
         Conversion preserves colour and alpha; it does not reinterpret channels.
       </p>
-      {!hex ? (
-        <p className="small gamut-note">
-          An sRGB hex value cannot represent this colour. Source channels remain
-          intact; the swatch depends on your display’s gamut.
-        </p>
-      ) : (
-        <p className="small muted">
-          Hex is an 8-bit sRGB representation; editing hex changes RGB
-          precision.
-        </p>
-      )}
       <details>
         <summary>Resolved CSS and precision</summary>
         <code className="color-css">{cssValue(value)}</code>

@@ -1,3 +1,4 @@
+import { cssValue, hexColor } from "../../domain/schema";
 import { test, expect } from "@playwright/test";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -25,16 +26,20 @@ test("foundation → anatomy → save → portable import → export", async ({
   ).toBeVisible();
   await page.getByRole("button", { name: "Foundations", exact: true }).click();
   await page.locator(".record-name").filter({ hasText: "Blue 600" }).click();
-  await page.getByLabel("Colour hex").fill("#CC4400");
-  await page.getByLabel("Colour hex").press("Enter");
+  await page.getByLabel("Colour OKLCH").fill(cssValue(hexColor("#CC4400")));
+  await page.getByLabel("Colour OKLCH").press("Enter");
   await page.getByRole("button", { name: "Undo", exact: true }).click();
-  await expect(page.getByLabel("Colour hex")).toHaveValue("#2563EB");
+  await expect(page.getByLabel("Colour OKLCH")).toHaveValue(
+    cssValue(hexColor("#2563EB")),
+  );
   await page.getByRole("button", { name: "Redo", exact: true }).click();
-  await expect(page.getByLabel("Colour hex")).toHaveValue("#CC4400");
+  await expect(page.getByLabel("Colour OKLCH")).toHaveValue(
+    cssValue(hexColor("#CC4400")),
+  );
   await page.getByRole("button", { name: "Components", exact: true }).click();
   await expect(preview().getByRole("button")).toHaveCSS(
     "background-color",
-    "rgb(204, 68, 0)",
+    cssValue(hexColor("#CC4400")),
   );
   await page
     .getByRole("button", { name: "Button", exact: true })
@@ -48,7 +53,7 @@ test("foundation → anatomy → save → portable import → export", async ({
   await page.getByLabel("background binding").selectOption("secondary_fill");
   await expect(preview().getByRole("button")).toHaveCSS(
     "background-color",
-    "rgb(255, 255, 255)",
+    cssValue(hexColor("#FFFFFF")),
   );
   await page.getByRole("button", { name: "Jump to background source" }).click();
   await expect(page.getByLabel("Entity name")).toHaveValue(

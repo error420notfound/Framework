@@ -301,7 +301,15 @@ describe("colour and portable compatibility", () => {
       { type: "update", id: "source_blue", changes: { value: extended } },
     ]);
     const reopened = importPortable(portableBytes(old));
-    expect(reopened.entities).toEqual(old.entities);
+    const migrated = structuredClone(old.entities);
+    if (migrated.source_blue.kind === "source")
+      migrated.source_blue.value = convertColor(extended, "oklch");
+    expect(reopened.entities).toEqual(migrated);
+    const restored = resolve(reopened, { ref: "source_blue" }).value as Color;
+    convertColor(restored, "display-p3").channels.forEach((n, i) =>
+      expect(n).toBeCloseTo(p3.channels[i], 7),
+    );
+    expect(restored.alpha).toBe(p3.alpha);
     expect(resolve(reopened, { ref: "font_weight" }).value).toEqual({
       type: "fontWeight",
       value: 600,

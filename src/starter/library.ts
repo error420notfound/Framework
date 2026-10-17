@@ -1,6 +1,6 @@
 import { execute } from "../domain/engine";
 import {
-  hexColor,
+  type DesignValue,
   type Binding,
   type ComponentEntity,
   type Entity,
@@ -44,23 +44,110 @@ export function createStarter(): LibraryDocument {
       assignments: {},
     },
   ];
-  for (const [id, name, hex] of [
-    ["blue", "Blue 600", "#2563EB"],
-    ["blueHover", "Blue 700", "#1D4ED8"],
-    ["bluePressed", "Blue 800", "#1E40AF"],
-    ["white", "White", "#FFFFFF"],
-    ["ink", "Slate 900", "#0F172A"],
-    ["muted", "Slate 500", "#64748B"],
-    ["border", "Slate 200", "#E2E8F0"],
-    ["canvas", "Slate 50", "#F8FAFC"],
-    ["disabled", "Slate 300", "#CBD5E1"],
-  ]) {
+  for (const [id, name, color] of [
+    [
+      "blue",
+      "Blue 600",
+      {
+        type: "color",
+        space: "oklch",
+        channels: [0.5461497233109911, 0.21520774805039064, 262.88091714087415],
+        alpha: 1,
+      },
+    ],
+    [
+      "blueHover",
+      "Blue 700",
+      {
+        type: "color",
+        space: "oklch",
+        channels: [0.48819831191672425, 0.21716546013691204, 264.3763040937021],
+        alpha: 1,
+      },
+    ],
+    [
+      "bluePressed",
+      "Blue 800",
+      {
+        type: "color",
+        space: "oklch",
+        channels: [
+          0.42444500037043004, 0.18086883857590264, 265.63771048282496,
+        ],
+        alpha: 1,
+      },
+    ],
+    [
+      "white",
+      "White",
+      {
+        type: "color",
+        space: "oklch",
+        channels: [0.9999999934735462, 3.7273995535192846e-8, 0],
+        alpha: 1,
+      },
+    ],
+    [
+      "ink",
+      "Slate 900",
+      {
+        type: "color",
+        space: "oklch",
+        channels: [0.20768191437415026, 0.03982431895646098, 265.7548740954241],
+        alpha: 1,
+      },
+    ],
+    [
+      "muted",
+      "Slate 500",
+      {
+        type: "color",
+        space: "oklch",
+        channels: [0.5543910041396626, 0.04071702286219474, 257.4166127520088],
+        alpha: 1,
+      },
+    ],
+    [
+      "border",
+      "Slate 200",
+      {
+        type: "color",
+        space: "oklch",
+        channels: [
+          0.9287612611494641, 0.012618740904999122, 255.50784649842123,
+        ],
+        alpha: 1,
+      },
+    ],
+    [
+      "canvas",
+      "Slate 50",
+      {
+        type: "color",
+        space: "oklch",
+        channels: [
+          0.9841518630825351, 0.003412665198490683, 247.85754398071106,
+        ],
+        alpha: 1,
+      },
+    ],
+    [
+      "disabled",
+      "Slate 300",
+      {
+        type: "color",
+        space: "oklch",
+        channels: [0.8689814311332097, 0.01984767799381485, 252.89430243496457],
+        alpha: 1,
+      },
+    ],
+  ] as [string, string, DesignValue][]) {
     entities.push({
       id: `source_${id}`,
       kind: "source",
       name,
       sourceType: "color",
-      value: hexColor(hex),
+      value: color,
       origin: {
         adapter: "illustrative-palette",
         externalId: id,
