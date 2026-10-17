@@ -4,10 +4,12 @@ A local-first design-system editor with typed tokens, native component anatomy, 
 
 ## Run
 
-Requires Node 22.12+ (verified here with Node 24). In Windows PowerShell use `npm.cmd` if `npm.ps1` is blocked by execution policy.
+Requires Node 24.21.0 or newer within Node 24.x. Local development and CI use the version pinned in `.nvmrc`. In Windows PowerShell use `npm.cmd` if `npm.ps1` is blocked by execution policy.
 
 ```sh
-npm install
+nvm install
+nvm use
+npm ci
 npm run dev
 ```
 
