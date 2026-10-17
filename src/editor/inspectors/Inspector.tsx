@@ -296,9 +296,14 @@ export function Inspector({
           Used by <small>{dependencyCount}</small>
         </button>
       </div>
-      {["node", "component", "instance", "style", "composition"].includes(
-        entity.kind,
-      ) ? (
+      {[
+        "node",
+        "component",
+        "instance",
+        "preset",
+        "style",
+        "composition",
+      ].includes(entity.kind) ? (
         <div className="inspector-sections" aria-label="Inspector sections">
           {(entity.kind === "node"
             ? [
@@ -318,9 +323,11 @@ export function Inspector({
                 ]
               : entity.kind === "style"
                 ? ["Appearance"]
-                : entity.kind === "instance"
-                  ? ["Properties", "Appearance", "Variants and states"]
-                  : ["Properties", "Behaviour/motion"]
+                : entity.kind === "preset"
+                  ? ["Properties", "Variants and states"]
+                  : entity.kind === "instance"
+                    ? ["Properties", "Appearance", "Variants and states"]
+                    : ["Properties", "Behaviour/motion"]
           ).map((tab) => (
             <button
               key={tab}
@@ -517,6 +524,69 @@ export function Inspector({
                   />
                 </Field>
               )}
+              {entity.primitive === "Text" ||
+              entity.primitive === "Surface" ||
+              entity.primitive === "Stack" ? (
+                <Field label="Semantic element">
+                  <select
+                    aria-label="Semantic element"
+                    value={entity.props.tag ?? ""}
+                    onChange={(e) => {
+                      const props = { ...entity.props };
+                      if (e.target.value)
+                        props.tag = e.target
+                          .value as NodeEntity["props"]["tag"];
+                      else delete props.tag;
+                      update({ props });
+                    }}
+                  >
+                    <option value="">Default</option>
+                    {(entity.primitive === "Text"
+                      ? [
+                          "span",
+                          "p",
+                          "h1",
+                          "h2",
+                          "h3",
+                          "h4",
+                          "blockquote",
+                          "code",
+                        ]
+                      : ["section", "article"]
+                    ).map((tag) => (
+                      <option key={tag}>{tag}</option>
+                    ))}
+                  </select>
+                </Field>
+              ) : null}
+              <Field label="Accessible role">
+                <select
+                  aria-label="Accessible role"
+                  value={entity.props.role ?? ""}
+                  onChange={(e) => {
+                    const props = { ...entity.props };
+                    if (e.target.value)
+                      props.role = e.target
+                        .value as NodeEntity["props"]["role"];
+                    else delete props.role;
+                    update({ props });
+                  }}
+                >
+                  <option value="">Native semantics</option>
+                  {["status", "alert", "img", "presentation"].map((role) => (
+                    <option key={role}>{role}</option>
+                  ))}
+                </select>
+              </Field>
+              <Field label="Accessible label">
+                <CommitInput
+                  label="Anatomy accessible label"
+                  value={entity.props.label ?? ""}
+                  onCommit={(label) =>
+                    update({ props: { ...entity.props, label } })
+                  }
+                />
+              </Field>
               {entity.primitive === "Grid" ? (
                 <Field label="Grid columns">
                   <CommitInput
@@ -839,7 +909,7 @@ export function Inspector({
             section={section}
           />
         ) : null}
-        {entity.kind === "instance" ? (
+        {entity.kind === "instance" || entity.kind === "preset" ? (
           <>
             <button
               className="text-link"
@@ -930,7 +1000,9 @@ export function Inspector({
                     )}
                   </div>
                   <div hidden={section !== "Appearance"}>
-                    <InstanceAppearance instance={entity} />
+                    {entity.kind === "instance" ? (
+                      <InstanceAppearance instance={entity} />
+                    ) : null}
                   </div>
                 </>
               );

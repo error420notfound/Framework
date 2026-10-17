@@ -33,3 +33,19 @@ Workstream: https://app.notion.com/p/3fbea1d9945581439d8dfa420fe3a70b (Kind Grou
 Every Action relates to the existing Formwork project and the refinement Group, links the refinement specification and has acceptance criteria plus changed-file/test evidence. The refinement specification and project received appended checkpoints; requirements and original completion history were retained. Read-back verified the four Actions and Group are Done. The project and original release/migration/device-budget Action remain In progress. The Tasks query now contains fifteen Done Actions and one In progress Action, six Done Groups and one In progress Group. No original task was reopened; no duplicate refinement task was created.
 
 Final evidence: 40 model tests, 58 browser tests passed plus 2 intentional parity-matrix skips, editor and three generated Astro routes build, required desktop/narrow screenshots inspected. Changes remain uncommitted on main based on 9a04544; nothing pushed or deployed. Pending Notion writes: none.
+
+## Starter expansion tracker — 2026-10-17
+
+Specification: https://app.notion.com/p/3fcea1d99455811f9ba3e9616c4b37f7
+
+Workstream (Group, In progress): https://app.notion.com/p/3fcea1d9945581608997ed1880791498
+
+| Batch Action | ID | Status |
+| --- | --- | --- |
+| A — Registration, presets and additive installation | 3fcea1d99455814bae9edef280373ef3 | Done |
+| B — Core editable families | 3fcea1d9945581dfa9feecf42384bcd9 | Done |
+| C — Interactive editable families | 3fcea1d994558124851ccc2abfcc0c2e | Not started |
+| D — Compositions | 3fcea1d9945581b49e13d9a580d72a8d | Not started |
+| E — Chart authoring | 3fcea1d99455811aa9abd01093ea4f92 | Not started |
+
+Schema and existing project tasks were fetched before creating this single workstream/five Actions. Each Action relates to the existing project and expansion Group, links the specification and has batch acceptance criteria. A/B were marked In progress when started, then Done after executed checks; actual implementation/evidence/limits were appended to both Actions and the expansion specification. No estimates/dates were set. Original completed implementation/refinement tasks and the outstanding release/migration/device-budget Action were untouched. Expansion/project remain In progress. Current evidence: 47 model tests, editor/four-route Astro builds, stable full 24-test Brave/Chromium run and final focused four-test expansion pass. Firefox/WebKit expansion checks remain unverified. Source revision, limitations and the exact next Batch C item are recorded on the spec. No push/deployment. Pending Notion writes: none after read-back verification.

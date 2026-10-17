@@ -63,3 +63,9 @@ Only schema 1 exists. Unknown document versions and unknown fields are rejected;
 Workspace selections, binding scopes and preview configurations are remembered separately from document history. Compositions display their referenced instances beneath definitions without inventing exclusive ownership. The contextual inspector retains mounted field drafts and resolves actual style/node/rule/instance provenance. Semantic dependency routes resolve current paths to stable entity and rule IDs.
 
 Panel preferences are optional localStorage (`formwork.panels.v1`), separate from IndexedDB documents and portable library files. Colour space switches use unrounded conversion; out-of-gamut sRGB uses extended `color(srgb …)` output. Schema version 1 and existing import/save/export contracts remain intact. See [authoring-refinements.md](authoring-refinements.md) for the detailed contract and evidence.
+
+## Additive starter expansion
+
+Schema 1 additionally reads a `preset` discriminator (snapshot configuration referencing a component), optional component capabilities and constrained semantic/native core anatomy. Existing schema-1 documents still parse without migration or write-on-open. Gallery insertion uses normal commands; preset configuration snapshots never acquire surprise live propagation. Additive installation computes a reviewed transaction and never overwrites existing IDs or grafts missing starter anatomy into an existing definition. See [library-expansion.md](library-expansion.md) for precise collision semantics.
+
+Selected Astro export walks a forward dependency closure, prunes theme assignments, includes relevant assets/motion and rejects unsupported capability targets. Preset/instance export wrappers reference a shared definition. Generated `/expansion/` consumes all core preset wrappers and is tested against shared compiler previews. The separate future migration/device-budget acceptance gate is unchanged.

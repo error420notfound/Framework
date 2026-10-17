@@ -54,6 +54,17 @@ export const tags: Record<NodeEntity["primitive"], string> = {
   Link: "a",
   TextField: "input",
   Checkbox: "input",
+  Separator: "hr",
+  Progress: "progress",
+  Table: "table",
+  TableHead: "thead",
+  TableBody: "tbody",
+  TableRow: "tr",
+  TableHeader: "th",
+  TableCell: "td",
+  TableCaption: "caption",
+  Spinner: "span",
+  Skeleton: "span",
 };
 export function tokenCss(doc: LibraryDocument): string {
   const tokens = Object.values(doc.entities).filter(
@@ -125,12 +136,28 @@ export function compileComponent(
     css += `${selector(n.id)}{${layout}${n.props.align ? `align-items:${n.props.align};` : ""}${n.props.justify ? `justify-content:${n.props.justify === "between" ? "space-between" : n.props.justify};` : ""}${declarations(doc, bs)}}`;
     return {
       id: n.id,
-      tag: tags[n.primitive],
+      tag: n.props.tag ?? tags[n.primitive],
       node: n,
       children: n.children.map(compile),
     };
   }
   const root = compile(c.rootId);
+  const nativeParts = new Set(
+    descendants(doc, c.rootId).map(
+      (id) => (doc.entities[id] as NodeEntity).primitive,
+    ),
+  );
+  if (nativeParts.has("Table"))
+    css += `${rootSelector}[data-fw-primitive="Table"]{display:table;border-collapse:collapse;table-layout:fixed;text-align:start}${rootSelector} [data-fw-primitive="TableHeader"],${rootSelector} [data-fw-primitive="TableCell"]{text-align:start;vertical-align:middle}`;
+  if (nativeParts.has("Separator"))
+    css += `${rootSelector}[data-fw-primitive="Separator"]{display:block;border-inline-style:none;border-block-end-style:none;border-block-start-style:solid}`;
+  if (nativeParts.has("Progress"))
+    css += `${rootSelector}[data-fw-primitive="Progress"]{display:block;appearance:none;accent-color:currentColor}${rootSelector}[data-fw-primitive="Progress"]::-webkit-progress-bar{background:inherit;border-radius:inherit}${rootSelector}[data-fw-primitive="Progress"]::-webkit-progress-value{background:currentColor;border-radius:inherit}${rootSelector}[data-fw-primitive="Progress"]::-moz-progress-bar{background:currentColor;border-radius:inherit}`;
+  if (nativeParts.has("Spinner"))
+    css += `${rootSelector}[data-fw-primitive="Spinner"]{display:inline-block;animation:fw-spin .8s linear infinite}@media(prefers-reduced-motion:reduce){${rootSelector}[data-fw-primitive="Spinner"]{animation:none}}`;
+  if (nativeParts.has("Skeleton"))
+    css += `${rootSelector}[data-fw-primitive="Skeleton"]{display:block;animation:fw-pulse 2s ease-in-out infinite}@keyframes fw-pulse{50%{opacity:.5}}@media(prefers-reduced-motion:reduce){${rootSelector}[data-fw-primitive="Skeleton"]{animation:none}}`;
+
   for (const r of [...c.rules].sort(
     (a, b) => statePriority(a.when.states) - statePriority(b.when.states),
   )) {
@@ -197,6 +224,22 @@ export function renderComponent(
     });
   function render(n: CompiledNode, isRoot = false): string {
     const node = n.node;
+    const tag =
+      isRoot && c.axes.element?.includes(variants.element)
+        ? variants.element
+        : n.tag;
+    if (
+      c.id === "avatar_component" &&
+      node.primitive === "Image" &&
+      doc.entities[String(values.image)]?.kind !== "asset"
+    )
+      return "";
+    if (
+      c.id === "avatar_component" &&
+      node.id === "avatar_fallback" &&
+      doc.entities[String(values.image)]?.kind === "asset"
+    )
+      return "";
     let text = node.props.text ?? "";
     const textProp = node.expose.text;
     if (textProp) text = String(values[textProp] ?? text);
@@ -209,12 +252,21 @@ export function renderComponent(
       if (n.tag === "button")
         attrs += ` type="button"${disabled ? " disabled" : ""} aria-busy="${loading}"`;
     }
+    if (node.props.role) attrs += ` role="${node.props.role}"`;
+    if (node.props.label)
+      attrs += ` aria-label="${escapeHtml(c.id === "avatar_component" && isRoot ? values.label : node.props.label)}"`;
+    if (node.primitive === "TableHeader") attrs += ' scope="col"';
+    if (node.primitive === "Progress")
+      attrs += ` max="100" value="${Math.max(0, Math.min(100, Number(values.value ?? 0)))}" aria-label="${escapeHtml(values.label ?? "Progress")}"`;
+    if (node.primitive === "Skeleton") attrs += ' aria-hidden="true"';
+    if (node.primitive === "Spinner")
+      attrs += ` role="status" aria-label="${escapeHtml(values.label ?? "Loading")}"`;
     if (node.primitive === "Icon") attrs += ' aria-hidden="true"';
     if (node.primitive === "Image") {
       const aid = node.expose.assetId
         ? String(values[node.expose.assetId])
         : node.props.assetId;
-      attrs += ` src="${escapeHtml(aid ? assetUrl(aid) : "")}" alt="${escapeHtml(node.props.alt ?? "")}"`;
+      attrs += ` src="${escapeHtml(aid ? assetUrl(aid) : "")}" alt="${escapeHtml(c.id === "avatar_component" ? values.initials : (node.props.alt ?? ""))}"`;
     }
     if (node.primitive === "Link") {
       const href = node.expose.href
@@ -235,7 +287,7 @@ export function renderComponent(
     const overrides = options.overrides?.[node.id];
     if (overrides)
       attrs += ` style="${escapeHtml(declarations(doc, overrides))}"`;
-    return `<${n.tag}${attrs}>${n.tag === "input" || n.tag === "img" ? "" : (node.primitive === "Icon" ? renderIcon(text) : escapeHtml(text)) + n.children.map((c) => render(c)).join("") + `</${n.tag}>`}`;
+    return `<${tag}${attrs}>${["input", "img", "hr"].includes(tag) ? "" : (node.primitive === "Icon" ? renderIcon(text) : escapeHtml(text)) + n.children.map((c) => render(c)).join("") + `</${tag}>`}`;
   }
   return render(compiled.root, true);
 }
@@ -257,5 +309,5 @@ export function previewHtml(
   const bg = doc.entities.surface
     ? cssValue(resolve(doc, { ref: "surface" }, context).value)
     : "#fff";
-  return `<!doctype html><html lang="en" data-fw-theme="${context.themeId ?? doc.themeId}" data-fw-density="${context.densityId ?? doc.densityId}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src data:; font-src data: https://fonts.gstatic.com; style-src 'unsafe-inline' https://fonts.googleapis.com;"><style>html{background:${bg};color-scheme:${context.themeId === "dark" ? "dark" : "light"}}body{margin:0;min-height:280px;display:flex;align-items:center;justify-content:center;padding:36px;font:14px system-ui}${css}</style></head><body><main style="max-width:${width}px;${options.values?.fullWidth ? "width:100%" : ""}">${renderComponent(doc, c, options)}</main></body></html>`;
+  return `<!doctype html><html lang="en" data-fw-theme="${context.themeId ?? doc.themeId}" data-fw-density="${context.densityId ?? doc.densityId}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src data:; font-src data: https://fonts.gstatic.com; style-src 'unsafe-inline' https://fonts.googleapis.com;"><style>html{background:${bg};color:${doc.entities.text_primary ? cssValue(resolve(doc, { ref: "text_primary" }, context).value) : "#000"};color-scheme:${context.themeId === "dark" ? "dark" : "light"}}body{margin:0;min-height:280px;display:flex;align-items:center;justify-content:center;padding:36px;font:14px system-ui}${css}</style></head><body><main style="max-width:${width}px;${options.values?.fullWidth ? "width:100%" : ""}">${renderComponent(doc, c, options)}</main></body></html>`;
 }

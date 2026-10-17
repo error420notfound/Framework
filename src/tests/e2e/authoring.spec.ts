@@ -57,7 +57,10 @@ test("foundation → anatomy → save → portable import → export", async ({
   await page.getByRole("button", { name: "Dependencies", exact: true }).click();
   await expect(page.locator(".source-chain")).toContainText("color.white");
   await page.getByRole("button", { name: "Styles", exact: true }).click();
-  await page.locator(".style-specimen").click();
+  await page
+    .locator(".style-specimen")
+    .filter({ hasText: "Control label" })
+    .click();
   await page.getByLabel("fontSize binding").selectOption("__literal");
   const size = page
     .locator(".binding-editor")

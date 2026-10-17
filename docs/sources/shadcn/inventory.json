@@ -1,0 +1,90 @@
+{
+  "revision": "d2fba50ee5b9113008b5bb908563527b7efd2f27",
+  "style": "new-york-v4",
+  "base": "radix",
+  "license": "MIT",
+  "files": {
+    "button": {
+      "sha256": "79dd6f75f8136394442202d6b8b922fb269eaad0a5dba579397c9d5b41f893bb",
+      "url": "https://github.com/shadcn-ui/ui/blob/d2fba50ee5b9113008b5bb908563527b7efd2f27/apps/v4/registry/new-york-v4/ui/button.tsx"
+    },
+    "progress": {
+      "sha256": "e012e1f7e6e66d11229d1233eccf91954edcd9179b418ff1d114dc651b86fd35",
+      "url": "https://github.com/shadcn-ui/ui/blob/d2fba50ee5b9113008b5bb908563527b7efd2f27/apps/v4/registry/new-york-v4/ui/progress.tsx"
+    },
+    "table": {
+      "sha256": "bd1a9fc83a5a2149e504038e274bb7e5a0351af59f6896df52ac4d5b439695ac",
+      "url": "https://github.com/shadcn-ui/ui/blob/d2fba50ee5b9113008b5bb908563527b7efd2f27/apps/v4/registry/new-york-v4/ui/table.tsx"
+    },
+    "badge": {
+      "sha256": "13a9380dfff853ee730c14a52df49f22aecd31f40f2998d7c1e7ec458b6e1650",
+      "url": "https://github.com/shadcn-ui/ui/blob/d2fba50ee5b9113008b5bb908563527b7efd2f27/apps/v4/registry/new-york-v4/ui/badge.tsx"
+    },
+    "avatar": {
+      "sha256": "0c5c48b8a1dff4fdc5ff9b6cb79cc9cd138682b7d86868068f571befe9675e88",
+      "url": "https://github.com/shadcn-ui/ui/blob/d2fba50ee5b9113008b5bb908563527b7efd2f27/apps/v4/registry/new-york-v4/ui/avatar.tsx"
+    },
+    "separator": {
+      "sha256": "ad7d5403fe337160e41dbf04147896e448ae3a747b8d06660d627d74d60021bc",
+      "url": "https://github.com/shadcn-ui/ui/blob/d2fba50ee5b9113008b5bb908563527b7efd2f27/apps/v4/registry/new-york-v4/ui/separator.tsx"
+    },
+    "card": {
+      "sha256": "ef8305b12c3112dab42a4708b41b1ebcc042fa5ab4c20f039da8d45b09ed5059",
+      "url": "https://github.com/shadcn-ui/ui/blob/d2fba50ee5b9113008b5bb908563527b7efd2f27/apps/v4/registry/new-york-v4/ui/card.tsx"
+    },
+    "chart": {
+      "sha256": "35e2fa755465ef8eb8ff8b483d493204d452152e7a8863474b1a69f5d44484db",
+      "url": "https://github.com/shadcn-ui/ui/blob/d2fba50ee5b9113008b5bb908563527b7efd2f27/apps/v4/registry/new-york-v4/ui/chart.tsx"
+    },
+    "spinner": {
+      "sha256": "5d040fc49cb54c0296070644053b5a8840ddbfca89a430546bf308df3fffad65",
+      "url": "https://github.com/shadcn-ui/ui/blob/d2fba50ee5b9113008b5bb908563527b7efd2f27/apps/v4/registry/new-york-v4/ui/spinner.tsx"
+    },
+    "skeleton": {
+      "sha256": "f51ce0fcd31e5c31437382e80ea0af94b4fc3d64221d27091d36824546780a43",
+      "url": "https://github.com/shadcn-ui/ui/blob/d2fba50ee5b9113008b5bb908563527b7efd2f27/apps/v4/registry/new-york-v4/ui/skeleton.tsx"
+    },
+    "alert": {
+      "sha256": "d03dcae5cdb63c381c1144ca9a0c49ba0e46466967d7deb94662034042acb034",
+      "url": "https://github.com/shadcn-ui/ui/blob/d2fba50ee5b9113008b5bb908563527b7efd2f27/apps/v4/registry/new-york-v4/ui/alert.tsx"
+    }
+  },
+  "examples": {
+    "button-outline.tsx": {
+      "sha256": "6d1581ca9388228b5360cce4ab61efc4335d1f98f5af4fcaf3859078141d6e21",
+      "url": "https://github.com/shadcn-ui/ui/blob/d2fba50ee5b9113008b5bb908563527b7efd2f27/apps/v4/registry/new-york-v4/examples/button-outline.tsx"
+    },
+    "typography-h1.tsx": {
+      "sha256": "56c752829e3dd44ebbb2b01a66aee09751d8b3f0d4415b8d6c07b7c4adc28be3",
+      "url": "https://github.com/shadcn-ui/ui/blob/d2fba50ee5b9113008b5bb908563527b7efd2f27/apps/v4/registry/new-york-v4/examples/typography-h1.tsx"
+    },
+    "card-demo.tsx": {
+      "sha256": "5e480048442a8a5bab54ddde1333c5ead1c9d5140543ece42203f0dbc542b58e",
+      "url": "https://github.com/shadcn-ui/ui/blob/d2fba50ee5b9113008b5bb908563527b7efd2f27/apps/v4/registry/new-york-v4/examples/card-demo.tsx"
+    },
+    "progress-demo.tsx": {
+      "sha256": "0c712ef88df3e3c953c8e4ef42bd2ebbc6736605484031b97334501ac130529c",
+      "url": "https://github.com/shadcn-ui/ui/blob/d2fba50ee5b9113008b5bb908563527b7efd2f27/apps/v4/registry/new-york-v4/examples/progress-demo.tsx"
+    },
+    "alert-demo.tsx": {
+      "sha256": "692415a8701b0c8494b955b8980fe6d0ee0d79a852e3cd639bfa5f858d775087",
+      "url": "https://github.com/shadcn-ui/ui/blob/d2fba50ee5b9113008b5bb908563527b7efd2f27/apps/v4/registry/new-york-v4/examples/alert-demo.tsx"
+    },
+    "badge-demo.tsx": {
+      "sha256": "be8d271adea8b2fcd2f900d8e8bead615ab09a0a39591edeedfc535616978b73",
+      "url": "https://github.com/shadcn-ui/ui/blob/d2fba50ee5b9113008b5bb908563527b7efd2f27/apps/v4/registry/new-york-v4/examples/badge-demo.tsx"
+    },
+    "skeleton-demo.tsx": {
+      "sha256": "dad425fea6f07d573d1b214ea683e7e9aee52795272123688fceca95c163f874",
+      "url": "https://github.com/shadcn-ui/ui/blob/d2fba50ee5b9113008b5bb908563527b7efd2f27/apps/v4/registry/new-york-v4/examples/skeleton-demo.tsx"
+    },
+    "table-demo.tsx": {
+      "sha256": "57fc6f2e491588b55d6ecd5f80f032919280f92dc488b573406aa8e36613292c",
+      "url": "https://github.com/shadcn-ui/ui/blob/d2fba50ee5b9113008b5bb908563527b7efd2f27/apps/v4/registry/new-york-v4/examples/table-demo.tsx"
+    },
+    "avatar-demo.tsx": {
+      "sha256": "e5a08187c1161d942f4df678f1fc8641acfc2b96659a4e213f931f6f9f5440a3",
+      "url": "https://github.com/shadcn-ui/ui/blob/d2fba50ee5b9113008b5bb908563527b7efd2f27/apps/v4/registry/new-york-v4/examples/avatar-demo.tsx"
+    }
+  }
+}

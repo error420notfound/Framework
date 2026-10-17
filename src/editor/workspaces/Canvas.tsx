@@ -32,7 +32,10 @@ export function Canvas() {
   }, []);
   const scale = Math.min(1, available / viewport);
   const selected = doc.entities[selectedId];
-  const instance = selected?.kind === "instance" ? selected : undefined;
+  const instance =
+    selected?.kind === "instance" || selected?.kind === "preset"
+      ? selected
+      : undefined;
   const id = instance?.componentId ?? componentId;
   const c = doc.entities[id];
   const html = useMemo(() => {

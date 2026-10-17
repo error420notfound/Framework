@@ -83,6 +83,17 @@ export const primitives = [
   "Link",
   "TextField",
   "Checkbox",
+  "Separator",
+  "Progress",
+  "Table",
+  "TableHead",
+  "TableBody",
+  "TableRow",
+  "TableHeader",
+  "TableCell",
+  "TableCaption",
+  "Spinner",
+  "Skeleton",
 ] as const;
 export const propertyTypes: Record<string, ValueType> = {
   background: "color",
@@ -183,6 +194,22 @@ const entitySchema = z.discriminatedUnion("kind", [
         columns: z.number().int().min(1).max(12).optional(),
         align: z.enum(["start", "center", "end", "stretch"]).optional(),
         justify: z.enum(["start", "center", "end", "between"]).optional(),
+        tag: z
+          .enum([
+            "span",
+            "p",
+            "h1",
+            "h2",
+            "h3",
+            "h4",
+            "blockquote",
+            "code",
+            "section",
+            "article",
+          ])
+          .optional(),
+        role: z.enum(["status", "alert", "img", "presentation"]).optional(),
+        label: z.string().max(500).optional(),
       })
       .default({}),
     expose: z
@@ -205,6 +232,26 @@ const entitySchema = z.discriminatedUnion("kind", [
     responsive: z
       .array(z.strictObject({ maxWidth: z.number().positive(), patch }))
       .default([]),
+    capabilities: z
+      .strictObject({
+        targets: z.array(z.enum(["astro", "html"])),
+        dependencies: z.array(z.string()),
+        hydration: z.enum(["none", "script", "react"]),
+        limits: z.string(),
+        source: z.string(),
+        revision: z.string(),
+      })
+      .optional(),
+  }),
+  z.strictObject({
+    ...base,
+    kind: z.literal("preset"),
+    componentId: id,
+    mode: z.literal("snapshot"),
+    configuration: z.record(z.string(), propertyValue),
+    variants: z.record(z.string(), z.string()),
+    overrides: patch,
+    description: z.string(),
   }),
   z.strictObject({
     ...base,

@@ -5,7 +5,19 @@ export default defineConfig({
   fullyParallel: false,
   use: { baseURL: "http://127.0.0.1:5173", trace: "retain-on-failure" },
   projects: [
-    { name: "chromium", use: { ...devices["Desktop Chrome"] } },
+    {
+      name: "chromium",
+      use: {
+        ...devices["Desktop Chrome"],
+        ...(process.env.FORMWORK_CHROMIUM_PATH
+          ? {
+              launchOptions: {
+                executablePath: process.env.FORMWORK_CHROMIUM_PATH,
+              },
+            }
+          : {}),
+      },
+    },
     { name: "firefox", use: { ...devices["Desktop Firefox"] } },
     { name: "webkit", use: { ...devices["Desktop Safari"] } },
   ],

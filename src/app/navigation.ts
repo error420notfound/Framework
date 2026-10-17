@@ -36,7 +36,7 @@ export function selectionContext(
           : ""
         : e.kind === "component"
           ? id
-          : e.kind === "instance"
+          : (e.kind === "instance" || e.kind === "preset")
             ? e.componentId
             : (owner?.id ?? ""),
     bindingScope: "base",

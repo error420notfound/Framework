@@ -155,14 +155,41 @@ export function validate(doc: LibraryDocument): Diagnostic[] {
         else check(b, propertyTypes[p], e.id);
       }
     if (e.kind === "node") {
+      if (
+        e.props.tag &&
+        !(
+          (e.primitive === "Text" &&
+            [
+              "span",
+              "p",
+              "h1",
+              "h2",
+              "h3",
+              "h4",
+              "blockquote",
+              "code",
+            ].includes(e.props.tag)) ||
+          (["Surface", "Stack"].includes(e.primitive) &&
+            ["section", "article"].includes(e.props.tag))
+        )
+      )
+        add("anatomy", "Semantic tag is incompatible with the primitive", e.id);
       if (e.styleId && doc.entities[e.styleId]?.kind !== "style")
         add("style", "Invalid style reference", e.id);
       if (e.props.assetId && doc.entities[e.props.assetId]?.kind !== "asset")
         add("asset", "Invalid asset reference", e.id);
       if (
-        ["Text", "Icon", "Image", "TextField", "Checkbox"].includes(
-          e.primitive,
-        ) &&
+        [
+          "Text",
+          "Icon",
+          "Image",
+          "TextField",
+          "Checkbox",
+          "Separator",
+          "Progress",
+          "Spinner",
+          "Skeleton",
+        ].includes(e.primitive) &&
         e.children.length
       )
         add("anatomy", `${e.primitive} cannot have children`, e.id);
@@ -177,9 +204,84 @@ export function validate(doc: LibraryDocument): Diagnostic[] {
         add("anatomy", (err as Error).message, e.id);
       }
     }
+    if (e.kind === "node") {
+      const allowedParents: Record<string, string[]> = {
+        TableHead: ["Table"],
+        TableBody: ["Table"],
+        TableCaption: ["Table"],
+        TableRow: ["TableHead", "TableBody"],
+        TableHeader: ["TableRow"],
+        TableCell: ["TableRow"],
+      };
+      const allowedChildren: Record<string, string[]> = {
+        Table: ["TableCaption", "TableHead", "TableBody"],
+        TableHead: ["TableRow"],
+        TableBody: ["TableRow"],
+        TableRow: ["TableHeader", "TableCell"],
+      };
+      if (
+        allowedChildren[e.primitive] &&
+        e.children.some((id) => {
+          const child = doc.entities[id];
+          return (
+            child?.kind !== "node" ||
+            !allowedChildren[e.primitive].includes(child.primitive)
+          );
+        })
+      )
+        add(
+          "anatomy",
+          "Table anatomy requires valid native table children",
+          e.id,
+        );
+      if (allowedParents[e.primitive]) {
+        const parents = Object.values(doc.entities).filter(
+          (p) => p.kind === "node" && p.children.includes(e.id),
+        );
+        if (
+          parents.some(
+            (p) =>
+              p.kind === "node" &&
+              !allowedParents[e.primitive].includes(p.primitive),
+          )
+        )
+          add("anatomy", "Invalid native table parent", e.id);
+      }
+    }
     if (e.kind === "component") {
       try {
         const nodes = descendants(doc, e.rootId);
+        if (
+          [
+            "TableHead",
+            "TableBody",
+            "TableRow",
+            "TableHeader",
+            "TableCell",
+            "TableCaption",
+          ].includes((doc.entities[e.rootId] as NodeEntity).primitive)
+        )
+          throw new Error("Table parts require a Table component root");
+        if (
+          e.axes.element &&
+          ((doc.entities[e.rootId] as NodeEntity).primitive !== "Text" ||
+            e.axes.element.some(
+              (tag) =>
+                ![
+                  "span",
+                  "p",
+                  "h1",
+                  "h2",
+                  "h3",
+                  "h4",
+                  "blockquote",
+                  "code",
+                ].includes(tag),
+            ))
+        )
+          throw new Error(
+            "Element axis requires a Text root and supported semantic elements",
+          );
         const visited = new Set<string>();
         function nesting(id: string, interactive: boolean) {
           const n = doc.entities[id] as NodeEntity;
@@ -188,10 +290,21 @@ export function validate(doc: LibraryDocument): Diagnostic[] {
           visited.add(id);
           if (
             ["Button", "Inline"].includes(n.primitive) &&
-            n.children.some((id) =>
-              ["Surface", "Stack", "Grid"].includes(
-                (doc.entities[id] as NodeEntity).primitive,
-              ),
+            n.children.some(
+              (id) =>
+                ["Surface", "Stack", "Grid", "Table", "Separator"].includes(
+                  (doc.entities[id] as NodeEntity).primitive,
+                ) ||
+                [
+                  "p",
+                  "h1",
+                  "h2",
+                  "h3",
+                  "h4",
+                  "blockquote",
+                  "section",
+                  "article",
+                ].includes((doc.entities[id] as NodeEntity).props.tag ?? ""),
             )
           )
             throw new Error(
@@ -270,7 +383,7 @@ export function validate(doc: LibraryDocument): Diagnostic[] {
         add("anatomy", (err as Error).message, e.id);
       }
     }
-    if (e.kind === "instance") {
+    if (e.kind === "instance" || e.kind === "preset") {
       const c = doc.entities[e.componentId];
       if (c?.kind !== "component")
         add("instance", "Invalid component definition", e.id);

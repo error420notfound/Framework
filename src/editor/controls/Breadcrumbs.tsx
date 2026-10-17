@@ -15,14 +15,17 @@ export function Breadcrumbs() {
           </button>
           <span>{e.name} · Motion</span>
         </>
-      ) : e.kind === "instance" ? (
+      ) : e.kind === "instance" || e.kind === "preset" ? (
         <>
           {compositionsFor(doc, e.id).map((c) => (
             <button key={c.id} onClick={() => select(c.id)}>
               {c.name} /
             </button>
           ))}
-          <span>{e.name} · Instance</span>
+          <span>
+            {e.name} ·{" "}
+            {e.kind === "preset" ? "Preset snapshot template" : "Instance"}
+          </span>
           <button onClick={() => select(e.componentId)}>
             Definition: {doc.entities[e.componentId]?.name}
           </button>

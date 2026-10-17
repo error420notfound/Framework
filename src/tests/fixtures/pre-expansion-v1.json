@@ -1,0 +1,1929 @@
+{
+  "schemaVersion": 1,
+  "id": "starter",
+  "name": "Starter library",
+  "revision": 0,
+  "entities": {
+    "light": {
+      "id": "light",
+      "name": "Light",
+      "kind": "theme",
+      "axis": "color",
+      "assignments": {}
+    },
+    "dark": {
+      "id": "dark",
+      "name": "Dark",
+      "kind": "theme",
+      "axis": "color",
+      "assignments": {
+        "surface": {
+          "ref": "color_ink"
+        },
+        "text_primary": {
+          "ref": "color_white"
+        },
+        "secondary_fill": {
+          "ref": "color_ink"
+        },
+        "secondary_text": {
+          "ref": "color_white"
+        }
+      }
+    },
+    "comfortable": {
+      "id": "comfortable",
+      "name": "Comfortable",
+      "kind": "theme",
+      "axis": "density",
+      "assignments": {}
+    },
+    "compact": {
+      "id": "compact",
+      "name": "Compact",
+      "kind": "theme",
+      "axis": "density",
+      "assignments": {
+        "padding_inline": {
+          "value": {
+            "type": "dimension",
+            "value": 12,
+            "unit": "px"
+          }
+        },
+        "padding_block": {
+          "value": {
+            "type": "dimension",
+            "value": 6,
+            "unit": "px"
+          }
+        }
+      }
+    },
+    "source_blue": {
+      "id": "source_blue",
+      "name": "Blue 600",
+      "kind": "source",
+      "sourceType": "color",
+      "value": {
+        "type": "color",
+        "space": "srgb",
+        "channels": [
+          0.1450980392156863,
+          0.38823529411764707,
+          0.9215686274509803
+        ],
+        "alpha": 1
+      },
+      "origin": {
+        "adapter": "illustrative-palette",
+        "externalId": "blue",
+        "metadata": {
+          "note": "Local illustrative fixture; not a live Chroma endpoint"
+        }
+      }
+    },
+    "color_blue": {
+      "id": "color_blue",
+      "name": "color.blue",
+      "kind": "token",
+      "layer": "foundation",
+      "valueType": "color",
+      "binding": {
+        "ref": "source_blue"
+      }
+    },
+    "source_blueHover": {
+      "id": "source_blueHover",
+      "name": "Blue 700",
+      "kind": "source",
+      "sourceType": "color",
+      "value": {
+        "type": "color",
+        "space": "srgb",
+        "channels": [
+          0.11372549019607843,
+          0.3058823529411765,
+          0.8470588235294118
+        ],
+        "alpha": 1
+      },
+      "origin": {
+        "adapter": "illustrative-palette",
+        "externalId": "blueHover",
+        "metadata": {
+          "note": "Local illustrative fixture; not a live Chroma endpoint"
+        }
+      }
+    },
+    "color_blueHover": {
+      "id": "color_blueHover",
+      "name": "color.blueHover",
+      "kind": "token",
+      "layer": "foundation",
+      "valueType": "color",
+      "binding": {
+        "ref": "source_blueHover"
+      }
+    },
+    "source_bluePressed": {
+      "id": "source_bluePressed",
+      "name": "Blue 800",
+      "kind": "source",
+      "sourceType": "color",
+      "value": {
+        "type": "color",
+        "space": "srgb",
+        "channels": [
+          0.11764705882352941,
+          0.25098039215686274,
+          0.6862745098039216
+        ],
+        "alpha": 1
+      },
+      "origin": {
+        "adapter": "illustrative-palette",
+        "externalId": "bluePressed",
+        "metadata": {
+          "note": "Local illustrative fixture; not a live Chroma endpoint"
+        }
+      }
+    },
+    "color_bluePressed": {
+      "id": "color_bluePressed",
+      "name": "color.bluePressed",
+      "kind": "token",
+      "layer": "foundation",
+      "valueType": "color",
+      "binding": {
+        "ref": "source_bluePressed"
+      }
+    },
+    "source_white": {
+      "id": "source_white",
+      "name": "White",
+      "kind": "source",
+      "sourceType": "color",
+      "value": {
+        "type": "color",
+        "space": "srgb",
+        "channels": [
+          1,
+          1,
+          1
+        ],
+        "alpha": 1
+      },
+      "origin": {
+        "adapter": "illustrative-palette",
+        "externalId": "white",
+        "metadata": {
+          "note": "Local illustrative fixture; not a live Chroma endpoint"
+        }
+      }
+    },
+    "color_white": {
+      "id": "color_white",
+      "name": "color.white",
+      "kind": "token",
+      "layer": "foundation",
+      "valueType": "color",
+      "binding": {
+        "ref": "source_white"
+      }
+    },
+    "source_ink": {
+      "id": "source_ink",
+      "name": "Slate 900",
+      "kind": "source",
+      "sourceType": "color",
+      "value": {
+        "type": "color",
+        "space": "srgb",
+        "channels": [
+          0.058823529411764705,
+          0.09019607843137255,
+          0.16470588235294117
+        ],
+        "alpha": 1
+      },
+      "origin": {
+        "adapter": "illustrative-palette",
+        "externalId": "ink",
+        "metadata": {
+          "note": "Local illustrative fixture; not a live Chroma endpoint"
+        }
+      }
+    },
+    "color_ink": {
+      "id": "color_ink",
+      "name": "color.ink",
+      "kind": "token",
+      "layer": "foundation",
+      "valueType": "color",
+      "binding": {
+        "ref": "source_ink"
+      }
+    },
+    "source_muted": {
+      "id": "source_muted",
+      "name": "Slate 500",
+      "kind": "source",
+      "sourceType": "color",
+      "value": {
+        "type": "color",
+        "space": "srgb",
+        "channels": [
+          0.39215686274509803,
+          0.4549019607843137,
+          0.5450980392156862
+        ],
+        "alpha": 1
+      },
+      "origin": {
+        "adapter": "illustrative-palette",
+        "externalId": "muted",
+        "metadata": {
+          "note": "Local illustrative fixture; not a live Chroma endpoint"
+        }
+      }
+    },
+    "color_muted": {
+      "id": "color_muted",
+      "name": "color.muted",
+      "kind": "token",
+      "layer": "foundation",
+      "valueType": "color",
+      "binding": {
+        "ref": "source_muted"
+      }
+    },
+    "source_border": {
+      "id": "source_border",
+      "name": "Slate 200",
+      "kind": "source",
+      "sourceType": "color",
+      "value": {
+        "type": "color",
+        "space": "srgb",
+        "channels": [
+          0.8862745098039215,
+          0.9098039215686274,
+          0.9411764705882353
+        ],
+        "alpha": 1
+      },
+      "origin": {
+        "adapter": "illustrative-palette",
+        "externalId": "border",
+        "metadata": {
+          "note": "Local illustrative fixture; not a live Chroma endpoint"
+        }
+      }
+    },
+    "color_border": {
+      "id": "color_border",
+      "name": "color.border",
+      "kind": "token",
+      "layer": "foundation",
+      "valueType": "color",
+      "binding": {
+        "ref": "source_border"
+      }
+    },
+    "source_canvas": {
+      "id": "source_canvas",
+      "name": "Slate 50",
+      "kind": "source",
+      "sourceType": "color",
+      "value": {
+        "type": "color",
+        "space": "srgb",
+        "channels": [
+          0.9725490196078431,
+          0.9803921568627451,
+          0.9882352941176471
+        ],
+        "alpha": 1
+      },
+      "origin": {
+        "adapter": "illustrative-palette",
+        "externalId": "canvas",
+        "metadata": {
+          "note": "Local illustrative fixture; not a live Chroma endpoint"
+        }
+      }
+    },
+    "color_canvas": {
+      "id": "color_canvas",
+      "name": "color.canvas",
+      "kind": "token",
+      "layer": "foundation",
+      "valueType": "color",
+      "binding": {
+        "ref": "source_canvas"
+      }
+    },
+    "source_disabled": {
+      "id": "source_disabled",
+      "name": "Slate 300",
+      "kind": "source",
+      "sourceType": "color",
+      "value": {
+        "type": "color",
+        "space": "srgb",
+        "channels": [
+          0.796078431372549,
+          0.8352941176470589,
+          0.8823529411764706
+        ],
+        "alpha": 1
+      },
+      "origin": {
+        "adapter": "illustrative-palette",
+        "externalId": "disabled",
+        "metadata": {
+          "note": "Local illustrative fixture; not a live Chroma endpoint"
+        }
+      }
+    },
+    "color_disabled": {
+      "id": "color_disabled",
+      "name": "color.disabled",
+      "kind": "token",
+      "layer": "foundation",
+      "valueType": "color",
+      "binding": {
+        "ref": "source_disabled"
+      }
+    },
+    "source_font": {
+      "id": "source_font",
+      "name": "System sans",
+      "kind": "source",
+      "sourceType": "font",
+      "value": {
+        "type": "fontFamily",
+        "value": "Inter, ui-sans-serif, system-ui, sans-serif"
+      },
+      "weights": [
+        400,
+        500,
+        600,
+        700
+      ],
+      "fontStyles": [
+        "normal"
+      ]
+    },
+    "font_family": {
+      "id": "font_family",
+      "name": "font.family.sans",
+      "kind": "token",
+      "layer": "foundation",
+      "valueType": "fontFamily",
+      "binding": {
+        "ref": "source_font"
+      }
+    },
+    "font_weight": {
+      "id": "font_weight",
+      "name": "font.weight.semibold",
+      "kind": "token",
+      "layer": "foundation",
+      "valueType": "fontWeight",
+      "binding": {
+        "value": {
+          "type": "fontWeight",
+          "value": 600
+        }
+      }
+    },
+    "font_size": {
+      "id": "font_size",
+      "name": "font.size.control",
+      "kind": "token",
+      "layer": "foundation",
+      "valueType": "dimension",
+      "binding": {
+        "value": {
+          "type": "dimension",
+          "value": 14,
+          "unit": "px"
+        }
+      }
+    },
+    "space_inline": {
+      "id": "space_inline",
+      "name": "space.inline",
+      "kind": "token",
+      "layer": "foundation",
+      "valueType": "dimension",
+      "binding": {
+        "value": {
+          "type": "dimension",
+          "value": 16,
+          "unit": "px"
+        }
+      }
+    },
+    "space_block": {
+      "id": "space_block",
+      "name": "space.block",
+      "kind": "token",
+      "layer": "foundation",
+      "valueType": "dimension",
+      "binding": {
+        "value": {
+          "type": "dimension",
+          "value": 10,
+          "unit": "px"
+        }
+      }
+    },
+    "radius": {
+      "id": "radius",
+      "name": "radius.control",
+      "kind": "token",
+      "layer": "foundation",
+      "valueType": "dimension",
+      "binding": {
+        "value": {
+          "type": "dimension",
+          "value": 6,
+          "unit": "px"
+        }
+      }
+    },
+    "space_gap": {
+      "id": "space_gap",
+      "name": "space.gap",
+      "kind": "token",
+      "layer": "foundation",
+      "valueType": "dimension",
+      "binding": {
+        "value": {
+          "type": "dimension",
+          "value": 8,
+          "unit": "px"
+        }
+      }
+    },
+    "fill": {
+      "id": "fill",
+      "name": "action.primary.default.fill",
+      "kind": "token",
+      "layer": "semantic",
+      "valueType": "color",
+      "binding": {
+        "ref": "color_blue"
+      }
+    },
+    "hover_fill": {
+      "id": "hover_fill",
+      "name": "action.primary.hover.fill",
+      "kind": "token",
+      "layer": "semantic",
+      "valueType": "color",
+      "binding": {
+        "ref": "color_blueHover"
+      }
+    },
+    "pressed_fill": {
+      "id": "pressed_fill",
+      "name": "action.primary.pressed.fill",
+      "kind": "token",
+      "layer": "semantic",
+      "valueType": "color",
+      "binding": {
+        "ref": "color_bluePressed"
+      }
+    },
+    "text": {
+      "id": "text",
+      "name": "action.primary.default.text",
+      "kind": "token",
+      "layer": "semantic",
+      "valueType": "color",
+      "binding": {
+        "ref": "color_white"
+      }
+    },
+    "secondary_fill": {
+      "id": "secondary_fill",
+      "name": "action.secondary.fill",
+      "kind": "token",
+      "layer": "semantic",
+      "valueType": "color",
+      "binding": {
+        "ref": "color_white"
+      }
+    },
+    "secondary_text": {
+      "id": "secondary_text",
+      "name": "action.secondary.text",
+      "kind": "token",
+      "layer": "semantic",
+      "valueType": "color",
+      "binding": {
+        "ref": "color_ink"
+      }
+    },
+    "disabled_fill": {
+      "id": "disabled_fill",
+      "name": "action.disabled.fill",
+      "kind": "token",
+      "layer": "semantic",
+      "valueType": "color",
+      "binding": {
+        "ref": "color_disabled"
+      }
+    },
+    "focus": {
+      "id": "focus",
+      "name": "control.focus.ring",
+      "kind": "token",
+      "layer": "semantic",
+      "valueType": "color",
+      "binding": {
+        "ref": "color_blue"
+      }
+    },
+    "surface": {
+      "id": "surface",
+      "name": "surface.canvas",
+      "kind": "token",
+      "layer": "semantic",
+      "valueType": "color",
+      "binding": {
+        "ref": "color_canvas"
+      }
+    },
+    "text_primary": {
+      "id": "text_primary",
+      "name": "text.primary",
+      "kind": "token",
+      "layer": "semantic",
+      "valueType": "color",
+      "binding": {
+        "ref": "color_ink"
+      }
+    },
+    "padding_inline": {
+      "id": "padding_inline",
+      "name": "control.padding.inline",
+      "kind": "token",
+      "layer": "semantic",
+      "valueType": "dimension",
+      "binding": {
+        "ref": "space_inline"
+      }
+    },
+    "padding_block": {
+      "id": "padding_block",
+      "name": "control.padding.block",
+      "kind": "token",
+      "layer": "semantic",
+      "valueType": "dimension",
+      "binding": {
+        "ref": "space_block"
+      }
+    },
+    "motion_fast": {
+      "id": "motion_fast",
+      "name": "motion.duration.fast",
+      "kind": "token",
+      "layer": "foundation",
+      "valueType": "duration",
+      "binding": {
+        "value": {
+          "type": "duration",
+          "value": 200,
+          "unit": "ms"
+        }
+      }
+    },
+    "motion_standard": {
+      "id": "motion_standard",
+      "name": "motion.duration.standard",
+      "kind": "token",
+      "layer": "foundation",
+      "valueType": "duration",
+      "binding": {
+        "value": {
+          "type": "duration",
+          "value": 300,
+          "unit": "ms"
+        }
+      }
+    },
+    "control_label": {
+      "id": "control_label",
+      "name": "Control label",
+      "kind": "style",
+      "bindings": {
+        "fontFamily": {
+          "ref": "font_family"
+        },
+        "fontWeight": {
+          "ref": "font_weight"
+        },
+        "fontSize": {
+          "ref": "font_size"
+        },
+        "lineHeight": {
+          "value": {
+            "type": "number",
+            "value": 1.4
+          }
+        },
+        "letterSpacing": {
+          "value": {
+            "type": "dimension",
+            "value": 0,
+            "unit": "px"
+          }
+        }
+      }
+    },
+    "button_root": {
+      "id": "button_root",
+      "name": "Button",
+      "kind": "node",
+      "primitive": "Button",
+      "bindings": {
+        "background": {
+          "ref": "fill"
+        },
+        "color": {
+          "ref": "text"
+        },
+        "paddingInline": {
+          "ref": "padding_inline"
+        },
+        "paddingBlock": {
+          "ref": "padding_block"
+        },
+        "borderRadius": {
+          "ref": "radius"
+        },
+        "borderWidth": {
+          "value": {
+            "type": "dimension",
+            "value": 1,
+            "unit": "px"
+          }
+        },
+        "borderColor": {
+          "ref": "fill"
+        },
+        "gap": {
+          "ref": "space_gap"
+        }
+      },
+      "children": [
+        "button_content"
+      ],
+      "props": {},
+      "expose": {}
+    },
+    "button_content": {
+      "id": "button_content",
+      "name": "Content",
+      "kind": "node",
+      "primitive": "Inline",
+      "bindings": {
+        "gap": {
+          "ref": "space_gap"
+        }
+      },
+      "children": [
+        "button_icon",
+        "button_label"
+      ],
+      "props": {
+        "align": "center"
+      },
+      "expose": {}
+    },
+    "button_icon": {
+      "id": "button_icon",
+      "name": "Icon",
+      "kind": "node",
+      "primitive": "Icon",
+      "bindings": {
+        "fontSize": {
+          "value": {
+            "type": "dimension",
+            "value": 18,
+            "unit": "px"
+          }
+        }
+      },
+      "children": [],
+      "props": {
+        "text": "+"
+      },
+      "expose": {
+        "text": "icon",
+        "hidden": "showIcon"
+      },
+      "slot": "icon"
+    },
+    "button_label": {
+      "id": "button_label",
+      "name": "Label",
+      "kind": "node",
+      "primitive": "Text",
+      "bindings": {},
+      "styleId": "control_label",
+      "children": [],
+      "props": {
+        "text": "Add item"
+      },
+      "expose": {
+        "text": "label"
+      },
+      "slot": "default"
+    },
+    "button": {
+      "id": "button",
+      "name": "Button",
+      "kind": "component",
+      "rootId": "button_root",
+      "properties": [
+        {
+          "id": "label",
+          "name": "Label",
+          "type": "text",
+          "default": "Add item"
+        },
+        {
+          "id": "icon",
+          "name": "Icon",
+          "type": "text",
+          "default": "+"
+        },
+        {
+          "id": "showIcon",
+          "name": "Show icon",
+          "type": "boolean",
+          "default": true
+        },
+        {
+          "id": "iconEnd",
+          "name": "Icon at end",
+          "type": "boolean",
+          "default": false
+        },
+        {
+          "id": "fullWidth",
+          "name": "Full width",
+          "type": "boolean",
+          "default": false
+        },
+        {
+          "id": "loading",
+          "name": "Loading",
+          "type": "boolean",
+          "default": false
+        },
+        {
+          "id": "disabled",
+          "name": "Disabled",
+          "type": "boolean",
+          "default": false
+        }
+      ],
+      "axes": {
+        "emphasis": [
+          "primary",
+          "secondary"
+        ],
+        "size": [
+          "small",
+          "medium",
+          "large"
+        ]
+      },
+      "defaults": {
+        "emphasis": "primary",
+        "size": "medium"
+      },
+      "rules": [
+        {
+          "id": "secondary",
+          "name": "Secondary",
+          "when": {
+            "variants": {
+              "emphasis": "secondary"
+            },
+            "states": []
+          },
+          "patch": {
+            "button_root": {
+              "background": {
+                "ref": "secondary_fill"
+              },
+              "color": {
+                "ref": "secondary_text"
+              },
+              "borderColor": {
+                "ref": "color_border"
+              }
+            }
+          }
+        },
+        {
+          "id": "small",
+          "name": "Small",
+          "when": {
+            "variants": {
+              "size": "small"
+            },
+            "states": []
+          },
+          "patch": {
+            "button_root": {
+              "paddingInline": {
+                "value": {
+                  "type": "dimension",
+                  "value": 12,
+                  "unit": "px"
+                }
+              },
+              "paddingBlock": {
+                "value": {
+                  "type": "dimension",
+                  "value": 6,
+                  "unit": "px"
+                }
+              }
+            },
+            "button_label": {
+              "fontSize": {
+                "value": {
+                  "type": "dimension",
+                  "value": 12,
+                  "unit": "px"
+                }
+              }
+            }
+          }
+        },
+        {
+          "id": "large",
+          "name": "Large",
+          "when": {
+            "variants": {
+              "size": "large"
+            },
+            "states": []
+          },
+          "patch": {
+            "button_root": {
+              "paddingInline": {
+                "value": {
+                  "type": "dimension",
+                  "value": 24,
+                  "unit": "px"
+                }
+              },
+              "paddingBlock": {
+                "value": {
+                  "type": "dimension",
+                  "value": 14,
+                  "unit": "px"
+                }
+              }
+            },
+            "button_label": {
+              "fontSize": {
+                "value": {
+                  "type": "dimension",
+                  "value": 16,
+                  "unit": "px"
+                }
+              }
+            }
+          }
+        },
+        {
+          "id": "hover",
+          "name": "Hover",
+          "when": {
+            "variants": {
+              "emphasis": "primary"
+            },
+            "states": [
+              "hover"
+            ]
+          },
+          "patch": {
+            "button_root": {
+              "background": {
+                "ref": "hover_fill"
+              },
+              "borderColor": {
+                "ref": "hover_fill"
+              }
+            }
+          }
+        },
+        {
+          "id": "secondaryHover",
+          "name": "Secondary hover",
+          "when": {
+            "variants": {
+              "emphasis": "secondary"
+            },
+            "states": [
+              "hover"
+            ]
+          },
+          "patch": {
+            "button_root": {
+              "background": {
+                "ref": "color_canvas"
+              }
+            }
+          }
+        },
+        {
+          "id": "pressed",
+          "name": "Pressed",
+          "when": {
+            "variants": {
+              "emphasis": "primary"
+            },
+            "states": [
+              "pressed"
+            ]
+          },
+          "patch": {
+            "button_root": {
+              "background": {
+                "ref": "pressed_fill"
+              },
+              "borderColor": {
+                "ref": "pressed_fill"
+              }
+            }
+          }
+        },
+        {
+          "id": "disabled",
+          "name": "Disabled",
+          "when": {
+            "variants": {},
+            "states": [
+              "disabled"
+            ]
+          },
+          "patch": {
+            "button_root": {
+              "background": {
+                "ref": "disabled_fill"
+              },
+              "borderColor": {
+                "ref": "disabled_fill"
+              },
+              "color": {
+                "ref": "color_muted"
+              }
+            }
+          }
+        },
+        {
+          "id": "focus",
+          "name": "Focus-visible",
+          "when": {
+            "variants": {},
+            "states": [
+              "focus-visible"
+            ]
+          },
+          "patch": {
+            "button_root": {
+              "outlineWidth": {
+                "value": {
+                  "type": "dimension",
+                  "value": 3,
+                  "unit": "px"
+                }
+              },
+              "outlineOffset": {
+                "value": {
+                  "type": "dimension",
+                  "value": 3,
+                  "unit": "px"
+                }
+              },
+              "outlineColor": {
+                "ref": "focus"
+              }
+            }
+          }
+        }
+      ],
+      "behavior": "button",
+      "responsive": []
+    },
+    "text_root": {
+      "id": "text_root",
+      "name": "Text",
+      "kind": "node",
+      "primitive": "Text",
+      "bindings": {
+        "fontFamily": {
+          "ref": "font_family"
+        },
+        "fontSize": {
+          "value": {
+            "type": "dimension",
+            "value": 16,
+            "unit": "px"
+          }
+        },
+        "color": {
+          "ref": "text_primary"
+        }
+      },
+      "children": [],
+      "props": {
+        "text": "Design is in the details."
+      },
+      "expose": {
+        "text": "content"
+      }
+    },
+    "text_component": {
+      "id": "text_component",
+      "name": "Text",
+      "kind": "component",
+      "rootId": "text_root",
+      "properties": [
+        {
+          "id": "content",
+          "name": "Content",
+          "type": "text",
+          "default": "Design is in the details."
+        }
+      ],
+      "axes": {},
+      "defaults": {},
+      "rules": [],
+      "behavior": "static",
+      "responsive": []
+    },
+    "icon_root": {
+      "id": "icon_root",
+      "name": "Icon",
+      "kind": "node",
+      "primitive": "Icon",
+      "bindings": {
+        "color": {
+          "ref": "text_primary"
+        },
+        "fontSize": {
+          "value": {
+            "type": "dimension",
+            "value": 24,
+            "unit": "px"
+          }
+        }
+      },
+      "children": [],
+      "props": {
+        "text": "+"
+      },
+      "expose": {
+        "text": "symbol"
+      }
+    },
+    "icon_component": {
+      "id": "icon_component",
+      "name": "Icon",
+      "kind": "component",
+      "rootId": "icon_root",
+      "properties": [
+        {
+          "id": "symbol",
+          "name": "Symbol",
+          "type": "text",
+          "default": "+"
+        }
+      ],
+      "axes": {},
+      "defaults": {},
+      "rules": [],
+      "behavior": "static",
+      "responsive": []
+    },
+    "image_root": {
+      "id": "image_root",
+      "name": "Image",
+      "kind": "node",
+      "primitive": "Image",
+      "bindings": {
+        "maxWidth": {
+          "value": {
+            "type": "dimension",
+            "value": 100,
+            "unit": "%"
+          }
+        }
+      },
+      "children": [],
+      "props": {
+        "alt": "Choose an image asset"
+      },
+      "expose": {
+        "assetId": "image"
+      }
+    },
+    "image_component": {
+      "id": "image_component",
+      "name": "Image",
+      "kind": "component",
+      "rootId": "image_root",
+      "properties": [
+        {
+          "id": "image",
+          "name": "Image asset",
+          "type": "asset",
+          "default": ""
+        }
+      ],
+      "axes": {},
+      "defaults": {},
+      "rules": [],
+      "behavior": "static",
+      "responsive": []
+    },
+    "surface_root": {
+      "id": "surface_root",
+      "name": "Surface",
+      "kind": "node",
+      "primitive": "Surface",
+      "bindings": {
+        "gap": {
+          "value": {
+            "type": "dimension",
+            "value": 16,
+            "unit": "px"
+          }
+        },
+        "paddingInline": {
+          "value": {
+            "type": "dimension",
+            "value": 20,
+            "unit": "px"
+          }
+        },
+        "paddingBlock": {
+          "value": {
+            "type": "dimension",
+            "value": 20,
+            "unit": "px"
+          }
+        },
+        "background": {
+          "ref": "surface"
+        },
+        "color": {
+          "ref": "text_primary"
+        }
+      },
+      "children": [],
+      "props": {
+        "columns": 2
+      },
+      "expose": {},
+      "slot": "default"
+    },
+    "surface_component": {
+      "id": "surface_component",
+      "name": "Surface",
+      "kind": "component",
+      "rootId": "surface_root",
+      "properties": [],
+      "axes": {},
+      "defaults": {},
+      "rules": [],
+      "behavior": "static",
+      "responsive": []
+    },
+    "stack_root": {
+      "id": "stack_root",
+      "name": "Stack",
+      "kind": "node",
+      "primitive": "Stack",
+      "bindings": {
+        "gap": {
+          "value": {
+            "type": "dimension",
+            "value": 16,
+            "unit": "px"
+          }
+        },
+        "paddingInline": {
+          "value": {
+            "type": "dimension",
+            "value": 20,
+            "unit": "px"
+          }
+        },
+        "paddingBlock": {
+          "value": {
+            "type": "dimension",
+            "value": 20,
+            "unit": "px"
+          }
+        },
+        "background": {
+          "ref": "surface"
+        },
+        "color": {
+          "ref": "text_primary"
+        }
+      },
+      "children": [],
+      "props": {
+        "columns": 2
+      },
+      "expose": {},
+      "slot": "default"
+    },
+    "stack_component": {
+      "id": "stack_component",
+      "name": "Stack",
+      "kind": "component",
+      "rootId": "stack_root",
+      "properties": [],
+      "axes": {},
+      "defaults": {},
+      "rules": [],
+      "behavior": "static",
+      "responsive": []
+    },
+    "inline_root": {
+      "id": "inline_root",
+      "name": "Inline",
+      "kind": "node",
+      "primitive": "Inline",
+      "bindings": {
+        "gap": {
+          "value": {
+            "type": "dimension",
+            "value": 16,
+            "unit": "px"
+          }
+        },
+        "paddingInline": {
+          "value": {
+            "type": "dimension",
+            "value": 20,
+            "unit": "px"
+          }
+        },
+        "paddingBlock": {
+          "value": {
+            "type": "dimension",
+            "value": 20,
+            "unit": "px"
+          }
+        },
+        "background": {
+          "ref": "surface"
+        },
+        "color": {
+          "ref": "text_primary"
+        }
+      },
+      "children": [],
+      "props": {
+        "columns": 2
+      },
+      "expose": {},
+      "slot": "default"
+    },
+    "inline_component": {
+      "id": "inline_component",
+      "name": "Inline",
+      "kind": "component",
+      "rootId": "inline_root",
+      "properties": [],
+      "axes": {},
+      "defaults": {},
+      "rules": [],
+      "behavior": "static",
+      "responsive": []
+    },
+    "grid_root": {
+      "id": "grid_root",
+      "name": "Grid",
+      "kind": "node",
+      "primitive": "Grid",
+      "bindings": {
+        "gap": {
+          "value": {
+            "type": "dimension",
+            "value": 16,
+            "unit": "px"
+          }
+        },
+        "paddingInline": {
+          "value": {
+            "type": "dimension",
+            "value": 20,
+            "unit": "px"
+          }
+        },
+        "paddingBlock": {
+          "value": {
+            "type": "dimension",
+            "value": 20,
+            "unit": "px"
+          }
+        },
+        "background": {
+          "ref": "surface"
+        },
+        "color": {
+          "ref": "text_primary"
+        }
+      },
+      "children": [],
+      "props": {
+        "columns": 2
+      },
+      "expose": {},
+      "slot": "default"
+    },
+    "grid_component": {
+      "id": "grid_component",
+      "name": "Grid",
+      "kind": "component",
+      "rootId": "grid_root",
+      "properties": [],
+      "axes": {},
+      "defaults": {},
+      "rules": [],
+      "behavior": "static",
+      "responsive": []
+    },
+    "link_root": {
+      "id": "link_root",
+      "name": "Link",
+      "kind": "node",
+      "primitive": "Link",
+      "bindings": {
+        "color": {
+          "ref": "focus"
+        },
+        "fontFamily": {
+          "ref": "font_family"
+        },
+        "fontSize": {
+          "value": {
+            "type": "dimension",
+            "value": 14,
+            "unit": "px"
+          }
+        }
+      },
+      "children": [],
+      "props": {
+        "text": "View details",
+        "href": "#details"
+      },
+      "expose": {
+        "text": "label",
+        "href": "href"
+      }
+    },
+    "link_component": {
+      "id": "link_component",
+      "name": "Link",
+      "kind": "component",
+      "rootId": "link_root",
+      "properties": [
+        {
+          "id": "label",
+          "name": "Label",
+          "type": "text",
+          "default": "View details"
+        },
+        {
+          "id": "href",
+          "name": "Destination",
+          "type": "text",
+          "default": "#details"
+        }
+      ],
+      "axes": {},
+      "defaults": {},
+      "rules": [],
+      "behavior": "link",
+      "responsive": []
+    },
+    "textfield_root": {
+      "id": "textfield_root",
+      "name": "Text field",
+      "kind": "node",
+      "primitive": "TextField",
+      "bindings": {
+        "fontFamily": {
+          "ref": "font_family"
+        },
+        "fontSize": {
+          "value": {
+            "type": "dimension",
+            "value": 14,
+            "unit": "px"
+          }
+        },
+        "paddingInline": {
+          "ref": "padding_inline"
+        },
+        "paddingBlock": {
+          "ref": "padding_block"
+        },
+        "borderRadius": {
+          "ref": "radius"
+        },
+        "borderWidth": {
+          "value": {
+            "type": "dimension",
+            "value": 1,
+            "unit": "px"
+          }
+        },
+        "borderColor": {
+          "ref": "color_border"
+        },
+        "background": {
+          "ref": "secondary_fill"
+        },
+        "color": {
+          "ref": "secondary_text"
+        }
+      },
+      "children": [],
+      "props": {
+        "text": "Enter a value"
+      },
+      "expose": {
+        "text": "placeholder"
+      }
+    },
+    "textfield_component": {
+      "id": "textfield_component",
+      "name": "TextField",
+      "kind": "component",
+      "rootId": "textfield_root",
+      "properties": [
+        {
+          "id": "placeholder",
+          "name": "Placeholder",
+          "type": "text",
+          "default": "Enter a value"
+        }
+      ],
+      "axes": {},
+      "defaults": {},
+      "rules": [],
+      "behavior": "input",
+      "responsive": []
+    },
+    "checkbox_root": {
+      "id": "checkbox_root",
+      "name": "Checkbox",
+      "kind": "node",
+      "primitive": "Checkbox",
+      "bindings": {
+        "width": {
+          "value": {
+            "type": "dimension",
+            "value": 18,
+            "unit": "px"
+          }
+        },
+        "minHeight": {
+          "value": {
+            "type": "dimension",
+            "value": 18,
+            "unit": "px"
+          }
+        }
+      },
+      "children": [],
+      "props": {
+        "text": "Enable option"
+      },
+      "expose": {
+        "text": "label"
+      }
+    },
+    "checkbox_component": {
+      "id": "checkbox_component",
+      "name": "Checkbox",
+      "kind": "component",
+      "rootId": "checkbox_root",
+      "properties": [
+        {
+          "id": "label",
+          "name": "Accessible label",
+          "type": "text",
+          "default": "Enable option"
+        }
+      ],
+      "axes": {},
+      "defaults": {},
+      "rules": [],
+      "behavior": "checkbox",
+      "responsive": []
+    },
+    "weight_value": {
+      "id": "weight_value",
+      "name": "Weight value",
+      "kind": "node",
+      "primitive": "Text",
+      "bindings": {
+        "fontFamily": {
+          "ref": "font_family"
+        },
+        "fontWeight": {
+          "value": {
+            "type": "fontWeight",
+            "value": 600
+          }
+        },
+        "fontSize": {
+          "value": {
+            "type": "dimension",
+            "value": 48,
+            "unit": "px"
+          }
+        },
+        "lineHeight": {
+          "value": {
+            "type": "number",
+            "value": 1.1
+          }
+        },
+        "color": {
+          "ref": "text_primary"
+        }
+      },
+      "children": [],
+      "props": {
+        "text": "18.2"
+      },
+      "expose": {
+        "text": "weight"
+      }
+    },
+    "weight_unit": {
+      "id": "weight_unit",
+      "name": "Unit",
+      "kind": "node",
+      "primitive": "Text",
+      "bindings": {
+        "fontSize": {
+          "value": {
+            "type": "dimension",
+            "value": 16,
+            "unit": "px"
+          }
+        },
+        "color": {
+          "ref": "color_muted"
+        }
+      },
+      "children": [],
+      "props": {
+        "text": "g"
+      },
+      "expose": {
+        "text": "unit"
+      }
+    },
+    "weight_status": {
+      "id": "weight_status",
+      "name": "Connection status",
+      "kind": "node",
+      "primitive": "Text",
+      "bindings": {
+        "fontSize": {
+          "value": {
+            "type": "dimension",
+            "value": 12,
+            "unit": "px"
+          }
+        },
+        "color": {
+          "ref": "color_muted"
+        }
+      },
+      "children": [],
+      "props": {
+        "text": "Stable · Connected"
+      },
+      "expose": {
+        "text": "status"
+      }
+    },
+    "weight_line": {
+      "id": "weight_line",
+      "name": "Value and unit",
+      "kind": "node",
+      "primitive": "Inline",
+      "bindings": {
+        "gap": {
+          "value": {
+            "type": "dimension",
+            "value": 8,
+            "unit": "px"
+          }
+        }
+      },
+      "children": [
+        "weight_value",
+        "weight_unit"
+      ],
+      "props": {
+        "align": "end"
+      },
+      "expose": {}
+    },
+    "weight_root": {
+      "id": "weight_root",
+      "name": "Weight readout",
+      "kind": "node",
+      "primitive": "Stack",
+      "bindings": {
+        "gap": {
+          "value": {
+            "type": "dimension",
+            "value": 10,
+            "unit": "px"
+          }
+        },
+        "paddingInline": {
+          "value": {
+            "type": "dimension",
+            "value": 24,
+            "unit": "px"
+          }
+        },
+        "paddingBlock": {
+          "value": {
+            "type": "dimension",
+            "value": 24,
+            "unit": "px"
+          }
+        },
+        "background": {
+          "ref": "surface"
+        },
+        "borderRadius": {
+          "ref": "radius"
+        }
+      },
+      "children": [
+        "weight_line",
+        "weight_status"
+      ],
+      "props": {},
+      "expose": {}
+    },
+    "weight_readout": {
+      "id": "weight_readout",
+      "name": "WeightReadout",
+      "kind": "component",
+      "rootId": "weight_root",
+      "properties": [
+        {
+          "id": "weight",
+          "name": "Weight",
+          "type": "number",
+          "default": 18.2
+        },
+        {
+          "id": "unit",
+          "name": "Unit",
+          "type": "text",
+          "default": "g"
+        },
+        {
+          "id": "status",
+          "name": "Status",
+          "type": "text",
+          "default": "Stable · Connected"
+        }
+      ],
+      "axes": {},
+      "defaults": {},
+      "rules": [],
+      "behavior": "static",
+      "responsive": []
+    },
+    "timer_label": {
+      "id": "timer_label",
+      "name": "Label",
+      "kind": "node",
+      "primitive": "Text",
+      "bindings": {
+        "fontSize": {
+          "value": {
+            "type": "dimension",
+            "value": 12,
+            "unit": "px"
+          }
+        },
+        "color": {
+          "ref": "color_muted"
+        }
+      },
+      "children": [],
+      "props": {
+        "text": "Brew time"
+      },
+      "expose": {}
+    },
+    "timer_value": {
+      "id": "timer_value",
+      "name": "Elapsed",
+      "kind": "node",
+      "primitive": "Text",
+      "bindings": {
+        "fontFamily": {
+          "ref": "font_family"
+        },
+        "fontSize": {
+          "value": {
+            "type": "dimension",
+            "value": 36,
+            "unit": "px"
+          }
+        },
+        "fontWeight": {
+          "ref": "font_weight"
+        },
+        "color": {
+          "ref": "text_primary"
+        }
+      },
+      "children": [],
+      "props": {
+        "text": "00:42"
+      },
+      "expose": {
+        "text": "elapsed"
+      }
+    },
+    "timer_root": {
+      "id": "timer_root",
+      "name": "Timer",
+      "kind": "node",
+      "primitive": "Stack",
+      "bindings": {
+        "gap": {
+          "value": {
+            "type": "dimension",
+            "value": 10,
+            "unit": "px"
+          }
+        },
+        "paddingInline": {
+          "value": {
+            "type": "dimension",
+            "value": 24,
+            "unit": "px"
+          }
+        },
+        "paddingBlock": {
+          "value": {
+            "type": "dimension",
+            "value": 24,
+            "unit": "px"
+          }
+        },
+        "background": {
+          "ref": "surface"
+        },
+        "borderRadius": {
+          "ref": "radius"
+        }
+      },
+      "children": [
+        "timer_label",
+        "timer_value"
+      ],
+      "props": {},
+      "expose": {}
+    },
+    "timer_component": {
+      "id": "timer_component",
+      "name": "Timer",
+      "kind": "component",
+      "rootId": "timer_root",
+      "properties": [
+        {
+          "id": "elapsed",
+          "name": "Formatted elapsed time",
+          "type": "text",
+          "default": "00:42"
+        }
+      ],
+      "axes": {},
+      "defaults": {},
+      "rules": [],
+      "behavior": "static",
+      "responsive": []
+    },
+    "brew_weight": {
+      "id": "brew_weight",
+      "name": "Brew weight",
+      "kind": "instance",
+      "componentId": "weight_readout",
+      "configuration": {
+        "weight": 18.2,
+        "status": "Stable · Connected"
+      },
+      "variants": {},
+      "overrides": {}
+    },
+    "brew_timer": {
+      "id": "brew_timer",
+      "name": "Brew timer",
+      "kind": "instance",
+      "componentId": "timer_component",
+      "configuration": {
+        "elapsed": "00:42"
+      },
+      "variants": {},
+      "overrides": {}
+    },
+    "brew_tare": {
+      "id": "brew_tare",
+      "name": "Tare control",
+      "kind": "instance",
+      "componentId": "button",
+      "configuration": {
+        "label": "Tare",
+        "icon": "↺"
+      },
+      "variants": {
+        "emphasis": "secondary"
+      },
+      "overrides": {}
+    },
+    "brew_start": {
+      "id": "brew_start",
+      "name": "Start control",
+      "kind": "instance",
+      "componentId": "button",
+      "configuration": {
+        "label": "Start brew",
+        "icon": "+"
+      },
+      "variants": {},
+      "overrides": {}
+    },
+    "brew_panel": {
+      "id": "brew_panel",
+      "name": "BrewPanel",
+      "kind": "composition",
+      "instances": [
+        "brew_weight",
+        "brew_timer",
+        "brew_tare",
+        "brew_start"
+      ],
+      "layout": "grid",
+      "gap": {
+        "value": {
+          "type": "dimension",
+          "value": 16,
+          "unit": "px"
+        }
+      },
+      "columns": 2,
+      "domain": "Brewing",
+      "dataContract": {
+        "weight": "number",
+        "connectionStatus": "text",
+        "stable": "boolean",
+        "overload": "boolean",
+        "elapsed": "text",
+        "tare": "action",
+        "start": "action"
+      }
+    }
+  },
+  "themeId": "light",
+  "densityId": "comfortable"
+}

@@ -1,3 +1,4 @@
+import { StarterGallery } from "../editor/controls/StarterGallery";
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import {
   Box,
@@ -78,6 +79,7 @@ export function App() {
     return () => media.removeEventListener("change", change);
   }, []);
   const [releasesOpen, setReleasesOpen] = useState(false);
+  const [galleryOpen, setGalleryOpen] = useState(false);
   const file = useRef<HTMLInputElement>(null),
     review = useRef<HTMLDialogElement>(null);
   useEffect(() => {
@@ -137,10 +139,21 @@ export function App() {
     }
     if (file.current) file.current.value = "";
   }
-  function exportFiles(kind: "portable" | "astro") {
+  function exportFiles(kind: "portable" | "astro", selected = false) {
     try {
       download(
-        kind === "portable" ? portableBytes(doc) : exportAstro(doc),
+        kind === "portable"
+          ? portableBytes(doc)
+          : exportAstro(
+              doc,
+              selected
+                ? [
+                    doc.entities[selectedId]?.kind === "composition"
+                      ? selectedId
+                      : useEditor.getState().componentId || selectedId,
+                  ]
+                : undefined,
+            ),
         `${doc.name.replace(/[^a-zA-Z0-9_-]/g, "-")}${kind === "portable" ? ".formwork" : "-astro.zip"}`,
       );
       setMenu(false);
@@ -269,6 +282,15 @@ export function App() {
                   <Download size={15} />
                   Astro package<span>.zip</span>
                 </button>
+                <button
+                  disabled={
+                    !useEditor.getState().componentId &&
+                    doc.entities[selectedId]?.kind !== "composition"
+                  }
+                  onClick={() => exportFiles("astro", true)}
+                >
+                  Selected Astro component and dependencies
+                </button>
                 <button onClick={() => exportFiles("portable")}>
                   <Save size={15} />
                   Portable library<span>.formwork</span>
@@ -366,7 +388,10 @@ export function App() {
         <div className="loading-screen">Opening your local library…</div>
       ) : (
         <div className="workspace">
-          <Browser onCreate={() => setCreate({})} />
+          <Browser
+            onCreate={() => setCreate({})}
+            onGallery={() => setGalleryOpen(true)}
+          />
           <main
             className={`main-workspace ${isCanvas ? "component-workspace" : ""}`}
           >
@@ -406,6 +431,9 @@ export function App() {
         </span>
         <span>Ctrl Z undo · Ctrl S save</span>
       </footer>
+      {galleryOpen ? (
+        <StarterGallery onClose={() => setGalleryOpen(false)} />
+      ) : null}
       {releasesOpen ? (
         <ReleasesDialog onClose={() => setReleasesOpen(false)} />
       ) : null}

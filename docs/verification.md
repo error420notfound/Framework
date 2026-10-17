@@ -51,3 +51,7 @@ Final visual repair: normalized editor select appearance and chevrons after WebK
 Verified selection return/source navigation, composition children and definition isolation, scoped/style/instance reset, exact responsive/motion routes, colour conversion/precision/validation, panel resize/collapse/preferences, keyboard interaction, save/reload/portable data and static export dependency exclusion. Screenshots at 1366 x 900, 1440 x 900, 900 x 900 and 390 x 844 were inspected. Evidence and tolerances are in [authoring-refinements.md](authoring-refinements.md); screenshots are under `output/playwright`.
 
 No R1–R8 check remains failing. Physical display gamut, physical browser/device certification, agreed device budgets and a genuine historical schema migration remain outside this refinement completion. No schema migration, push or deployment was performed.
+
+## Starter expansion checkpoint — 2026-10-17
+
+Batches A/B: 47 model tests and editor/generated Astro builds pass; four generated routes include the expansion showcase consuming all 13 preset wrappers. Stable full Brave/Chromium run: 24 passed; final focused expansion recheck: 4 passed after the mobile-gallery and semantic-Progress fixes. Existing 72-case Button matrix remains passing. Current Firefox/WebKit unverified because Playwright binaries are unavailable on this macOS 13 host. Full commands, chronology, screenshots, coverage and limits: [library-expansion-evidence.md](library-expansion-evidence.md). Batches C–E and the separate device/release acceptance gate remain open. No push/deployment.

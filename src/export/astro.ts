@@ -1,3 +1,5 @@
+import { exportSelection } from "./selection";
+import { shadcnLicense } from "../starter/source-license";
 import iconLicenses from "../icons/licenses.json";
 import iconRuntimeSource from "../icons/runtime-source.json";
 import {
@@ -11,19 +13,46 @@ import { cssValue, isRef } from "../domain/schema";
 import { zipSync, strToU8 } from "fflate";
 import { motionRuntime } from "./motion";
 
-export function astroFiles(doc: LibraryDocument): Record<string, Uint8Array> {
+export function astroFiles(
+  input: LibraryDocument,
+  selectedIds?: string[],
+): Record<string, Uint8Array> {
+  const doc = selectedIds ? exportSelection(input, selectedIds) : input;
+  for (const component of Object.values(doc.entities))
+    if (
+      component.kind === "component" &&
+      component.capabilities &&
+      !component.capabilities.targets.includes("astro")
+    )
+      throw new Error(
+        `${component.name} does not support astro. Supported targets: ${component.capabilities.targets.join(", ")}. ${component.capabilities.limits}`,
+      );
   const files: Record<string, Uint8Array> = {};
-  files["components/icons.js"] = strToU8(iconRuntimeSource);
-  files["ICON-LICENSES.txt"] = strToU8(
-    Object.entries(iconLicenses)
-      .map(([name, license]) => name + "\n\n" + license)
-      .join("\n\n"),
+  if (
+    Object.values(doc.entities).some(
+      (e) => e.kind === "component" && e.capabilities?.revision,
+    )
+  )
+    files["SHADCN-LICENSE.txt"] = strToU8(shadcnLicense);
+  const needsIcons = Object.values(doc.entities).some(
+    (e) => e.kind === "node" && e.primitive === "Icon",
   );
+  if (needsIcons) files["components/icons.js"] = strToU8(iconRuntimeSource);
+  if (needsIcons)
+    files["ICON-LICENSES.txt"] = strToU8(
+      Object.entries(iconLicenses)
+        .map(([name, license]) => name + "\n\n" + license)
+        .join("\n\n"),
+    );
   let css = tokenCss(doc);
   const names = new Map<string, string>();
   const usedNames = new Set<string>();
   for (const e of Object.values(doc.entities).filter(
-    (e) => e.kind === "component" || e.kind === "composition",
+    (e) =>
+      e.kind === "component" ||
+      e.kind === "composition" ||
+      e.kind === "preset" ||
+      e.kind === "instance",
   )) {
     let name = e.name.replace(/[^a-zA-Z0-9]/g, "") || e.id;
     if (!/^[A-Z]/.test(name)) name = `C${name}`;
@@ -39,7 +68,7 @@ export function astroFiles(doc: LibraryDocument): Record<string, Uint8Array> {
     const defaults = Object.fromEntries(
       component.properties.map((p) => [p.id, p.default]),
     );
-    const expression = (s: string) =>
+    const expression = (s: unknown) =>
       JSON.stringify(s).replaceAll("<", "\\u003c");
     function markup(n: CompiledNode, root = false): string {
       const node = n.node;
@@ -55,9 +84,22 @@ export function astroFiles(doc: LibraryDocument): Record<string, Uint8Array> {
       attrs += root
         ? ` style={[nativeProps.style, nodeOverrides[${expression(n.id)}]].filter(Boolean).join(';')}`
         : ` style={nodeOverrides[${expression(n.id)}]}`;
+      if (node.props.role) attrs += ` role="${node.props.role}"`;
+      if (node.props.label)
+        attrs +=
+          component.id === "avatar_component" && root
+            ? ` aria-label={values.label}`
+            : ` aria-label=${expression(node.props.label)}`;
+      if (node.primitive === "TableHeader") attrs += ' scope="col"';
+      if (node.primitive === "Progress")
+        attrs +=
+          ' max="100" value={Math.max(0, Math.min(100, Number(values.value ?? 0)))} aria-label={values.label ?? "Progress"}';
+      if (node.primitive === "Skeleton") attrs += ' aria-hidden="true"';
+      if (node.primitive === "Spinner")
+        attrs += ' role="status" aria-label={values.label ?? "Loading"}';
       if (node.primitive === "Icon") attrs += ' aria-hidden="true"';
       if (node.primitive === "Image")
-        attrs += ` src={assetUrls[values[${expression(node.expose.assetId ?? "")}]] ?? ${expression(node.props.assetId ? `/formwork/assets/${node.props.assetId}.${(doc.entities[node.props.assetId] as any)?.filename?.split(".").at(-1)}` : "")}} alt=${expression(node.props.alt ?? "")}`;
+        attrs += ` src={assetUrls[values[${expression(node.expose.assetId ?? "")}]] ?? ${expression(node.props.assetId ? `/formwork/assets/${node.props.assetId}.${(doc.entities[node.props.assetId] as any)?.filename?.split(".").at(-1)}` : "")}} alt=${component.id === "avatar_component" ? "{values.initials}" : expression(node.props.alt ?? "")}`;
       if (node.primitive === "Link")
         attrs += node.expose.href
           ? ` href={safeHref(values[${expression(node.expose.href)}])}`
@@ -86,16 +128,21 @@ export function astroFiles(doc: LibraryDocument): Record<string, Uint8Array> {
           node.slot === "default"
             ? `<slot>${content}</slot>`
             : `<slot name="${node.slot}">${content}</slot>`;
-      const html = ["img", "input"].includes(n.tag)
-        ? `<${n.tag}${attrs} />`
-        : `<${n.tag}${attrs}>${content}</${n.tag}>`;
+      const tag = root && component.axes.element ? "RootTag" : n.tag;
+      const html = ["img", "input", "hr"].includes(n.tag)
+        ? `<${tag}${attrs} />`
+        : `<${tag}${attrs}>${content}</${tag}>`;
+      if (component.id === "avatar_component" && node.id === "avatar_image")
+        return `{assetUrls[values.image] && (${html})}`;
+      if (component.id === "avatar_component" && node.id === "avatar_fallback")
+        return `{!assetUrls[values.image] && (${html})}`;
       return node.expose.hidden
         ? `{values[${expression(node.expose.hidden)}] !== false && (${html})}`
         : html;
     }
     const propertyNames = component.properties.map((p) => p.id);
     const axisNames = Object.keys(component.axes);
-    const source = `---\n// Generated from Formwork anatomy; no editor or client runtime.\nimport './library.css';\nimport { renderIcon } from './icons.js';\nconst { type, nodeOverrides = {}, ...incoming } = Astro.props;\nconst safeHref = value => /^(https?:\\/\\/|mailto:|tel:|\\/|#)/.test(String(value)) ? value : '#';\nconst defaults = ${expression(defaults as any)};\nconst variants = { ...${expression(component.defaults as any)}, ...Object.fromEntries(Object.entries(incoming).filter(([key]) => ${expression(axisNames as any)}.includes(key))) };\nconst values = { ...defaults, ...Object.fromEntries(Object.entries(incoming).filter(([key]) => ${expression(propertyNames as any)}.includes(key))) };\nconst nativeProps = Object.fromEntries(Object.entries(incoming).filter(([key]) => !${expression([...propertyNames, ...axisNames] as any)}.includes(key)));\nconst assetUrls = ${JSON.stringify(
+    const source = `---\n// Generated from Formwork anatomy; no editor or client runtime.\nimport './library.css';\n${needsIcons ? "import { renderIcon } from './icons.js';" : ""}\nconst { type, nodeOverrides = {}, ...incoming } = Astro.props;\nconst safeHref = value => /^(https?:\\/\\/|mailto:|tel:|\\/|#)/.test(String(value)) ? value : '#';\nconst defaults = ${expression(defaults as any)};\nconst variants = { ...${expression(component.defaults as any)}, ...Object.fromEntries(Object.entries(incoming).filter(([key]) => ${expression(axisNames as any)}.includes(key))) };\nconst RootTag = ${expression(component.axes.element ?? (["span"] as any))}.includes(variants.element) ? variants.element : ${expression(component.defaults.element ?? "span")};\nconst values = { ...defaults, ...Object.fromEntries(Object.entries(incoming).filter(([key]) => ${expression(propertyNames as any)}.includes(key))) };\nconst nativeProps = Object.fromEntries(Object.entries(incoming).filter(([key]) => !${expression([...propertyNames, ...axisNames] as any)}.includes(key)));\nconst assetUrls = ${JSON.stringify(
       Object.fromEntries(
         Object.values(doc.entities)
           .filter((e) => e.kind === "asset")
@@ -113,6 +160,29 @@ export function astroFiles(doc: LibraryDocument): Record<string, Uint8Array> {
     files[`components/${names.get(component.id)}.astro`] = strToU8(
       source + motionScript,
     );
+  }
+  for (const preset of Object.values(doc.entities)) {
+    if (preset.kind !== "preset" && preset.kind !== "instance") continue;
+    const componentName = names.get(preset.componentId);
+    const overrides = Object.fromEntries(
+      Object.entries(preset.overrides).map(([id, bs]) => [
+        id,
+        Object.entries(bs)
+          .map(
+            ([p, b]) =>
+              `${p.replace(/[A-Z]/g, (m) => `-${m.toLowerCase()}`)}:${isRef(b) ? `var(--fw-${b.ref})` : cssValue(b.value)}`,
+          )
+          .join(";"),
+      ]),
+    );
+    files[`components/${names.get(preset.id)}.astro`] = strToU8(`---
+import Definition from './${componentName}.astro';
+// Snapshot configuration, shared definition. Consumer properties override this configuration.
+const defaults=${JSON.stringify({ ...preset.configuration, ...preset.variants }).replaceAll("<", "\\u003c")};
+const nodeOverrides=${JSON.stringify(overrides)};
+---
+<Definition {...defaults} nodeOverrides={nodeOverrides} {...Astro.props} />
+`);
   }
   for (const composition of Object.values(doc.entities).filter(
     (e) => e.kind === "composition",
@@ -171,4 +241,5 @@ export function astroFiles(doc: LibraryDocument): Record<string, Uint8Array> {
   );
   return files;
 }
-export const exportAstro = (doc: LibraryDocument) => zipSync(astroFiles(doc));
+export const exportAstro = (doc: LibraryDocument, selectedIds?: string[]) =>
+  zipSync(astroFiles(doc, selectedIds));

@@ -53,7 +53,13 @@ export const EntityIcon = ({ entity }: { entity: Entity }) =>
   ) : (
     <Layers size={15} />
   );
-export function Browser({ onCreate }: { onCreate: () => void }) {
+export function Browser({
+  onCreate,
+  onGallery,
+}: {
+  onCreate: () => void;
+  onGallery: () => void;
+}) {
   const { doc, workspace, selectedId, componentId, search, select } =
     useEditor();
   const matches = (id: string) =>
@@ -81,6 +87,11 @@ export function Browser({ onCreate }: { onCreate: () => void }) {
           <Plus size={18} />
         </button>
       </div>
+      {workspace === "Components" || workspace === "Compositions" ? (
+        <button className="gallery-open" onClick={onGallery}>
+          Library gallery / install
+        </button>
+      ) : null}
       <div className="section-label">
         {workspace}
         <span>{items.length}</span>
@@ -172,7 +183,8 @@ export function AnatomyTree() {
   const c = doc.entities[componentId];
   const collapsed = useEditor((s) => s.anatomyCollapsed);
   if (c?.kind !== "component") return null;
-  if (doc.entities[selectedId]?.kind === "instance") return null;
+  if (["instance", "preset"].includes(doc.entities[selectedId]?.kind))
+    return null;
 
   function tree(id: string, depth = 0) {
     const n = doc.entities[id];

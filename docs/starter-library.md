@@ -124,3 +124,9 @@ Native Button defaults, variant/state order and loading semantics are documented
 ## BrewPanel
 
 A responsive grid of WeightReadout, Timer, secondary Tare Button and primary Start Button instances. Color themes and density remain independent. Below 500px the composition becomes a single column. Samples cover connected, disconnected, stale, unstable and overload values. Exported data uses stable instance IDs; applications supply values and attach actions using data-fw-instance. No live device transport or interval timer is included.
+
+## Explicit starter expansion
+
+New libraries now include native Badge, Avatar, Separator, Card, Alert, Skeleton, Spinner, Progress and Table definitions. Existing Button gains emphasis choices; existing Text gains semantic element/tone axes and shared typography styles. Thirteen snapshot presets reference these eleven definitions. Existing libraries install additions explicitly through Components → Library gallery / install; opening a library does not overwrite it. Presets are edited through the gallery and inserted as ordinary instances of the shared definition.
+
+See [library-expansion.md](library-expansion.md) for the component/preset inventory, installation and runtime/export matrix; [source-adaptation-matrix.md](source-adaptation-matrix.md) for pinned upstream sources/licences; and [library-expansion-evidence.md](library-expansion-evidence.md) for executed validation. Interactive expansion, new compositions and charts remain separate unfinished batches. The original starter/refinement completion evidence above remains historical evidence, not completion of those batches.

@@ -1,3 +1,4 @@
+import { authorExpansion } from "./expansion";
 import { execute } from "../domain/engine";
 import {
   type ComponentEntity,
@@ -390,6 +391,6 @@ export function applyBrewScenario(
   ];
 }
 export const createCompleteStarter = () => ({
-  ...authorCollection(createStarter()),
+  ...authorExpansion(authorCollection(createStarter())),
   revision: 0,
 });
